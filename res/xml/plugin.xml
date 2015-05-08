@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uexplugins>
+
+   <plugin
+        className="org.zywx.wbpalmstar.plugin.uexcontacts.EUExContact"
+        uexName="uexContact" >
+        <method name="open" />
+        <method name="multiOpen" />
+        <method name="addItem" />
+        <method name="deleteItem" />
+        <method name="searchItem" />
+        <method name="modifyItem" />
+        <method name="addItemWithVCard" />
+    </plugin>
+</uexplugins>
