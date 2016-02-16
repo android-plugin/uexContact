@@ -157,7 +157,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 								holder.num.setText((String) list.get(position)
 										.get(EUExCallback.F_JK_NUM));
 							} else {
-//								holder.num.setText("");
+								holder.num.setText("");
 							}
 							if (list.get(position).containsKey(
 									EUExCallback.F_JK_EMAIL)) {
@@ -165,7 +165,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 										.get(position).get(
 												EUExCallback.F_JK_EMAIL));
 							} else {
-//								holder.email.setText("");
+								holder.email.setText("");
 							}
 							if (isShowSelectMode) {
 								holder.check.setVisibility(View.VISIBLE);
