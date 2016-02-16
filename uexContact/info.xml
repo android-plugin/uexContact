@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uexplugins>
     <plugin
-        uexName="uexContact" version="3.0.1" build="1">
-        <info>1:searchItem接口增加返回信息条数配置;2:addItem接口增加是否弹出提示框配置</info>
+        uexName="uexContact" version="3.0.2" build="2">
+        <info>2:修复打开联系人后邮箱错乱的问题</info>
+        <build>1:searchItem接口增加返回信息条数配置;2:addItem接口增加是否弹出提示框配置</build>
         <build>0:联系人功能插件</build>
     </plugin>
 </uexplugins>

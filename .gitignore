@@ -25,3 +25,13 @@ proguard/
 
 # Log Files
 *.log
+
+# IDEA IDE
+.idea/
+*.iml
+
+# Windows
+Thumbs.db
+
+# MAC
+.DS_Store
