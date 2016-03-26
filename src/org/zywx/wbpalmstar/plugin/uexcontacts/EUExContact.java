@@ -1,3 +1,21 @@
+/*
+ *  Copyright (C) 2014 The AppCan Open Source Project.
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package org.zywx.wbpalmstar.plugin.uexcontacts;
 
 import java.util.ArrayList;
@@ -172,7 +190,7 @@ public class EUExContact extends EUExBase {
         }
     }
 
-    public void addItem(String[] parm) {
+    public void addItem(final String[] parm) {
         if (parm == null || parm.length < 3)
             return;
         final String inName = parm[0];
@@ -197,14 +215,27 @@ public class EUExContact extends EUExBase {
                                 @Override
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
-                                    addContact(inName, inNum, inEmail);
+                                	new Thread(new Runnable() {
+                            			
+                            			@Override
+                            			public void run() {
+                            				addContact(inName, inNum, inEmail);
+                            			}
+                            		}).start();
+                                    
                                 }
 
                             })
                     .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
                     .show();
         }else{
-            addContact(inName, inNum, inEmail);
+        	new Thread(new Runnable() {
+    			
+    			@Override
+    			public void run() {
+    				addContact(inName, inNum, inEmail);
+    			}
+    		}).start();
         }
 
     }
@@ -243,80 +274,92 @@ public class EUExContact extends EUExBase {
                             @Override
                             public void onClick(DialogInterface dialog,
                                                 int which) {
-                                if (inName != null && inName.length() > 0) {
-                                    if (PFConcactMan.deletes(mContext, inName)) {
-                                        jsCallback(KEY_CONTACT_DELETE, 0,
-                                                EUExCallback.F_C_INT,
-                                                EUExCallback.F_C_SUCCESS);
-                                    } else {
-                                        jsCallback(KEY_CONTACT_DELETE, 0,
-                                                EUExCallback.F_C_INT,
-                                                EUExCallback.F_C_FAILED);
-                                    }
-                                } else {
-                                    jsCallback(KEY_CONTACT_DELETE, 0,
-                                            EUExCallback.F_C_INT,
-                                            EUExCallback.F_C_FAILED);
-                                }
+                            	new Thread(new Runnable() {
+                        			
+                        			@Override
+                        			public void run() {
+                        				if (inName != null && inName.length() > 0) {
+                                            if (PFConcactMan.deletes(mContext, inName)) {
+                                                jsCallback(KEY_CONTACT_DELETE, 0,
+                                                        EUExCallback.F_C_INT,
+                                                        EUExCallback.F_C_SUCCESS);
+                                            } else {
+                                                jsCallback(KEY_CONTACT_DELETE, 0,
+                                                        EUExCallback.F_C_INT,
+                                                        EUExCallback.F_C_FAILED);
+                                            }
+                                        } else {
+                                            jsCallback(KEY_CONTACT_DELETE, 0,
+                                                    EUExCallback.F_C_INT,
+                                                    EUExCallback.F_C_FAILED);
+                                        }
+                        			}
+                        		}).start();
                             }
                         })
                 .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
                 .show();
     }
 
-    public void searchItem(String[] parm) {
+    public void searchItem(final String[] parm) {
         if (parm == null || parm.length < 1)
             return;
-        String inName = parm[0];
-        int resultNum = 50;
-        if (parm.length > 1){
-            String optionJson = parm[1];
-            SearchOptionVO searchOptionVO = DataHelper.gson.fromJson(optionJson,
-                    SearchOptionVO.class);
-            if (searchOptionVO != null){
-                resultNum = searchOptionVO.getResultNum();
-            }
-        }
-        if (inName != null && inName.length() >= 0) {
-            JSONArray outJsonObj = PFConcactMan.search(mContext, inName);
-            if (outJsonObj != null) {
-                if (resultNum == -1){
-                    jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
-                }else{
-                    if (outJsonObj.length() < resultNum) {//if lenght < resultNum
-                        jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
-                    } else {//if length >resultNum
-                        int size = outJsonObj.length() / resultNum + 1;
-                        int index = 0;
-                        for (int i = 0; i < size; i++) {
-                            JSONArray jsonArray = new JSONArray();
-                            if (i == size - 1) {
-                                for (int n = index; n < outJsonObj.length(); n++) {
-                                    try {
-                                        jsonArray.put(outJsonObj.get(index++));
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            } else {
-                                for (int j = 0; j < resultNum; j++) {
-                                    try {
-                                        jsonArray.put(outJsonObj.get(index++));
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                            jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, jsonArray.toString());
-                        }
-                    }
-                }
-            } else {
-                jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-            }
-        } else {
-            jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
-        }
+        new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				String inName = parm[0];
+		        int resultNum = 50;
+		        if (parm.length > 1){
+		            String optionJson = parm[1];
+		            SearchOptionVO searchOptionVO = DataHelper.gson.fromJson(optionJson,
+		                    SearchOptionVO.class);
+		            if (searchOptionVO != null){
+		                resultNum = searchOptionVO.getResultNum();
+		            }
+		        }
+		        if (inName != null && inName.length() >= 0) {
+		            JSONArray outJsonObj = PFConcactMan.search(mContext, inName);
+		            if (outJsonObj != null) {
+		                if (resultNum == -1){
+		                    jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
+		                }else{
+		                    if (outJsonObj.length() < resultNum) {//if lenght < resultNum
+		                        jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
+		                    } else {//if length >resultNum
+		                        int size = outJsonObj.length() / resultNum + 1;
+		                        int index = 0;
+		                        for (int i = 0; i < size; i++) {
+		                            JSONArray jsonArray = new JSONArray();
+		                            if (i == size - 1) {
+		                                for (int n = index; n < outJsonObj.length(); n++) {
+		                                    try {
+		                                        jsonArray.put(outJsonObj.get(index++));
+		                                    } catch (JSONException e) {
+		                                        e.printStackTrace();
+		                                    }
+		                                }
+		                            } else {
+		                                for (int j = 0; j < resultNum; j++) {
+		                                    try {
+		                                        jsonArray.put(outJsonObj.get(index++));
+		                                    } catch (JSONException e) {
+		                                        e.printStackTrace();
+		                                    }
+		                                }
+		                            }
+		                            jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, jsonArray.toString());
+		                        }
+		                    }
+		                }
+		            } else {
+		                jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+		            }
+		        } else {
+		            jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+		        }
+			}
+		}).start();
     }
 
     public void modifyItem(String[] parm) {
@@ -335,23 +378,29 @@ public class EUExContact extends EUExBase {
                             @Override
                             public void onClick(DialogInterface dialog,
                                                 int which) {
-                                if (inName != null && inName.length() > 0
-                                        && inNum != null && inEmail != null) {
-                                    if (PFConcactMan.modify(mContext, inName,
-                                            inNum, inEmail)) {
-                                        jsCallback(KEY_CONTACT_MODIFY, 0,
-                                                EUExCallback.F_C_INT,
-                                                EUExCallback.F_C_SUCCESS);
-                                    } else {
-                                        jsCallback(KEY_CONTACT_MODIFY, 0,
-                                                EUExCallback.F_C_INT,
-                                                EUExCallback.F_C_FAILED);
-                                    }
-                                } else {
-                                    jsCallback(KEY_CONTACT_MODIFY, 0,
-                                            EUExCallback.F_C_INT,
-                                            EUExCallback.F_C_FAILED);
-                                }
+                            	new Thread(new Runnable() {
+									
+									@Override
+									public void run() {
+										if (inName != null && inName.length() > 0
+		                                        && inNum != null && inEmail != null) {
+		                                    if (PFConcactMan.modify(mContext, inName,
+		                                            inNum, inEmail)) {
+		                                        jsCallback(KEY_CONTACT_MODIFY, 0,
+		                                                EUExCallback.F_C_INT,
+		                                                EUExCallback.F_C_SUCCESS);
+		                                    } else {
+		                                        jsCallback(KEY_CONTACT_MODIFY, 0,
+		                                                EUExCallback.F_C_INT,
+		                                                EUExCallback.F_C_FAILED);
+		                                    }
+		                                } else {
+		                                    jsCallback(KEY_CONTACT_MODIFY, 0,
+		                                            EUExCallback.F_C_INT,
+		                                            EUExCallback.F_C_FAILED);
+		                                }
+									}
+								}).start();
                             }
                         })
                 .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
@@ -363,110 +412,120 @@ public class EUExContact extends EUExBase {
 
     public void addItemWithVCard(final String[] parm) {
         if(parm.length == 2 && "1".equals(parm[1])){
-            VCardParser parser = new VCardParser();
-            VDataBuilder builder = new VDataBuilder();
-            try {
-                boolean parsed = parser.parse(parm[0],
-                        "UTF-8", builder);
-                // get all parsed contacts
-                List<VNode> pimContacts = builder.vNodeList;
-                Map<String, String> contactMap = new HashMap<String, String>();
-                // do something for all the contacts
-                for (VNode contact : pimContacts) {
-                    ArrayList<PropertyNode> props = contact.propList;
+        	new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					 VCardParser parser = new VCardParser();
+			            VDataBuilder builder = new VDataBuilder();
+			            try {
+			                boolean parsed = parser.parse(parm[0],
+			                        "UTF-8", builder);
+			                // get all parsed contacts
+			                List<VNode> pimContacts = builder.vNodeList;
+			                Map<String, String> contactMap = new HashMap<String, String>();
+			                // do something for all the contacts
+			                for (VNode contact : pimContacts) {
+			                    ArrayList<PropertyNode> props = contact.propList;
 
-                    // contact name - FN property
-                    String name = null;
-                    for (PropertyNode prop : props) {
-                        for (String type : types) {
-                            if (type.equals(prop.propName)) {
-                                contactMap.put(type,
-                                        prop.propValue);
-                            }
+			                    // contact name - FN property
+			                    String name = null;
+			                    for (PropertyNode prop : props) {
+			                        for (String type : types) {
+			                            if (type.equals(prop.propName)) {
+			                                contactMap.put(type,
+			                                        prop.propValue);
+			                            }
+			                        }
+
+			                    }
+			                }
+			                if (PFConcactMan.add(mContext, contactMap,
+			                        accountName, accountType)) {
+			                    jsCallback(KEY_CONTACT_ADD, 0,
+			                            EUExCallback.F_C_INT,
+			                            EUExCallback.F_C_SUCCESS);
+			                } else {
+			                    jsCallback(KEY_CONTACT_ADD, 0,
+			                            EUExCallback.F_C_INT,
+			                            EUExCallback.F_C_FAILED);
+			                }
+			            } catch (Exception e) {
+			                jsCallback(KEY_CONTACT_ADD, 0,
+			                        EUExCallback.F_C_INT,
+			                        EUExCallback.F_C_FAILED);
+			                e.printStackTrace();
+			            }
+			            return ;
+				}
+			}).start();
+        }else{
+        	new AlertDialog.Builder(mContext)
+            .setTitle(/* "提示" */finder.getStringId("prompt"))
+            .setMessage(
+            /* "是否添加联系人" */finder.getStringId("plugin_contact_add_prompt"))
+            .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog,
+                                            int which) {
+                        	new Thread(new Runnable() {
+								
+								@Override
+								public void run() {
+									VCardParser parser = new VCardParser();
+		                            VDataBuilder builder = new VDataBuilder();
+		                            try {
+		                                boolean parsed = parser.parse(parm[0],
+		                                        "UTF-8", builder);
+		                                // get all parsed contacts
+		                                List<VNode> pimContacts = builder.vNodeList;
+		                                Map<String, String> contactMap = new HashMap<String, String>();
+		                                // do something for all the contacts
+		                                for (VNode contact : pimContacts) {
+		                                    ArrayList<PropertyNode> props = contact.propList;
+
+		                                    // contact name - FN property
+		                                    String name = null;
+		                                    for (PropertyNode prop : props) {
+		                                        for (String type : types) {
+		                                            if (type.equals(prop.propName)) {
+		                                                contactMap.put(type,
+		                                                        prop.propValue);
+		                                            }
+		                                        }
+
+		                                    }
+		                                }
+		                                if (PFConcactMan.add(mContext, contactMap,
+		                                        accountName, accountType)) {
+		                                    jsCallback(KEY_CONTACT_ADD, 0,
+		                                            EUExCallback.F_C_INT,
+		                                            EUExCallback.F_C_SUCCESS);
+		                                } else {
+		                                    jsCallback(KEY_CONTACT_ADD, 0,
+		                                            EUExCallback.F_C_INT,
+		                                            EUExCallback.F_C_FAILED);
+		                                }
+		                            } catch (Exception e) {
+		                                // TODO Auto-generated catch block
+		                                jsCallback(KEY_CONTACT_ADD, 0,
+		                                        EUExCallback.F_C_INT,
+		                                        EUExCallback.F_C_FAILED);
+		                                e.printStackTrace();
+		                            }
+								}
+							}).start();
                         }
 
-                    }
-                }
-                if (PFConcactMan.add(mContext, contactMap,
-                        accountName, accountType)) {
-                    jsCallback(KEY_CONTACT_ADD, 0,
-                            EUExCallback.F_C_INT,
-                            EUExCallback.F_C_SUCCESS);
-                } else {
-                    jsCallback(KEY_CONTACT_ADD, 0,
-                            EUExCallback.F_C_INT,
-                            EUExCallback.F_C_FAILED);
-                }
-            } catch (Exception e) {
-                jsCallback(KEY_CONTACT_ADD, 0,
-                        EUExCallback.F_C_INT,
-                        EUExCallback.F_C_FAILED);
-                e.printStackTrace();
-            }
-            return ;
+                    })
+            .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+            .show();
         }
-        new AlertDialog.Builder(mContext)
-                .setTitle(/* "提示" */finder.getStringId("prompt"))
-                .setMessage(
-                /* "是否添加联系人" */finder.getStringId("plugin_contact_add_prompt"))
-                .setPositiveButton(/* "是" */finder.getStringId("confirm"),
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog,
-                                                int which) {
-
-                                VCardParser parser = new VCardParser();
-                                VDataBuilder builder = new VDataBuilder();
-                                try {
-                                    boolean parsed = parser.parse(parm[0],
-                                            "UTF-8", builder);
-                                    // get all parsed contacts
-                                    List<VNode> pimContacts = builder.vNodeList;
-                                    Map<String, String> contactMap = new HashMap<String, String>();
-                                    // do something for all the contacts
-                                    for (VNode contact : pimContacts) {
-                                        ArrayList<PropertyNode> props = contact.propList;
-
-                                        // contact name - FN property
-                                        String name = null;
-                                        for (PropertyNode prop : props) {
-                                            for (String type : types) {
-                                                if (type.equals(prop.propName)) {
-                                                    contactMap.put(type,
-                                                            prop.propValue);
-                                                }
-                                            }
-
-                                        }
-                                    }
-                                    if (PFConcactMan.add(mContext, contactMap,
-                                            accountName, accountType)) {
-                                        jsCallback(KEY_CONTACT_ADD, 0,
-                                                EUExCallback.F_C_INT,
-                                                EUExCallback.F_C_SUCCESS);
-                                    } else {
-                                        jsCallback(KEY_CONTACT_ADD, 0,
-                                                EUExCallback.F_C_INT,
-                                                EUExCallback.F_C_FAILED);
-                                    }
-                                } catch (Exception e) {
-                                    // TODO Auto-generated catch block
-                                    jsCallback(KEY_CONTACT_ADD, 0,
-                                            EUExCallback.F_C_INT,
-                                            EUExCallback.F_C_FAILED);
-                                    e.printStackTrace();
-                                }
-                            }
-
-                        })
-                .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
-                .show();
-
     }
 
     @Override
     public boolean clean() {
-
         return false;
     }
     /**
