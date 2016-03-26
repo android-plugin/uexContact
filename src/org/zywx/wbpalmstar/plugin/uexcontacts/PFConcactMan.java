@@ -1,4 +1,23 @@
 /*
+ *  Copyright (C) 2014 The AppCan Open Source Project.
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+/*
  * 添加联系人values.put(Contacts.Phones.TYPE, Contacts.Phones.TYPE_HOME);通过类型每次只能添加一个
  * 修改联系人Cursor通过得到时进行条件筛选来修改具体某条记录中的具体电话或邮件类型
  */
@@ -27,7 +46,6 @@ import android.provider.ContactsContract.CommonDataKinds.Organization;
 import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.Data;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Toast;
 
 public class PFConcactMan {
@@ -59,7 +77,7 @@ public class PFConcactMan {
 				values.put(android.provider.Contacts.ContactMethods.DATA, email);
 				values.put(android.provider.Contacts.ContactMethods.TYPE, android.provider.Contacts.ContactMethods.TYPE_HOME);
 				context.getContentResolver().insert(emailUri, values);
-				Toast.makeText(context, finder.getString(context, "plugin_contact_add_succeed"), Toast.LENGTH_SHORT).show();
+				ToastShow(context, finder.getString(context, "plugin_contact_add_succeed"));
 			} else {
 				ContentValues values = new ContentValues();
 				Uri rawContactUri = context.getContentResolver().insert(android.provider.ContactsContract.RawContacts.CONTENT_URI, values);
@@ -92,7 +110,7 @@ public class PFConcactMan {
 				}
 			}
 		} catch (Exception e) {
-			Toast.makeText(context, finder.getString(context, "plugin_contact_add_fail"), Toast.LENGTH_SHORT).show();
+			ToastShow(context, finder.getString(context, "plugin_contact_add_fail"));
 			return false;
 		}
 		return true;
@@ -101,13 +119,26 @@ public class PFConcactMan {
 	/*
 	 * 根据inName删除联系人列表中的信息
 	 */
-	public static boolean deletes(Context context, String inName) {
+	public static boolean deletes(final Context context, String inName) {
 		ContentResolver cr = context.getContentResolver();
 		try {
 			ContentResolver contentResolver = context.getContentResolver();
 			if (inName != null) {
 				JSONArray jsonsArray = search(context, inName);
 				if (jsonsArray!=null && jsonsArray.length()>0) {
+					int length = jsonsArray.length();
+					boolean hasName = false;
+					for (int i = 0; i < length; i++) {
+						JSONObject item = jsonsArray.getJSONObject(i);
+						if(inName.equals(item.getString(EUExCallback.F_JK_NAME))){
+							hasName = true;
+							break;
+						}
+					}
+					if(!hasName){
+						ToastShow(context, finder.getString(context, "plugin_contact_delete_fail"));
+						return false;
+					}
 					int sdkVersion = Build.VERSION.SDK_INT;
 					if (sdkVersion <= 8) {// 小于2.2版本
 						Cursor cur = cr.query(android.provider.Contacts.People.CONTENT_URI, null, null, null, null);
@@ -155,14 +186,14 @@ public class PFConcactMan {
 						}
 						cur.close();
 					}
-					Toast.makeText(context, finder.getString(context, "plugin_contact_delete_succeed"), Toast.LENGTH_SHORT).show();
+					ToastShow(context, finder.getString(context, "plugin_contact_delete_succeed"));
 				} else {
-					Toast.makeText(context, finder.getString(context, "plugin_contact_delete_fail"), Toast.LENGTH_SHORT).show();
+					ToastShow(context, finder.getString(context, "plugin_contact_delete_fail"));
 					return false;
 				}
 			}
 		} catch (Exception e) {
-			Toast.makeText(context, finder.getString(context, "plugin_contact_delete_fail"), Toast.LENGTH_SHORT).show();
+			ToastShow(context, finder.getString(context, "plugin_contact_delete_fail"));
 			return false;
 		}
 		return true;
@@ -213,14 +244,14 @@ public class PFConcactMan {
 
 						sb.delete(0, sb.length());
 						getValueWithName(context, id, jsonObject);
-						Toast.makeText(context, finder.getString(context, "plugin_contact_find_succeed"), Toast.LENGTH_SHORT).show();
+						ToastShow(context, finder.getString(context, "plugin_contact_find_succeed"));
 					}
 					sb.delete(0, sb.length());
 					jsonArray.put(jsonObject);
 				}
 				sb.delete(0, sb.length());
 			} catch (Exception e) {
-				Toast.makeText(context, finder.getString(context, "plugin_contact_find_fail"), Toast.LENGTH_SHORT).show();
+				ToastShow(context, finder.getString(context, "plugin_contact_find_fail"));
 				return null;
 			} finally {
 				if (cur != null)
@@ -266,7 +297,7 @@ public class PFConcactMan {
 
 				}
 			} catch (Exception e) {
-				Toast.makeText(context, finder.getString(context, "plugin_contact_find_fail"), Toast.LENGTH_SHORT).show();
+				ToastShow(context, finder.getString(context, "plugin_contact_find_fail"));
 				return null;
 			} finally {
 				if (cursor != null)
@@ -282,6 +313,7 @@ public class PFConcactMan {
 	public static boolean modify(Context context, String inName, String inNum, String inEmail) {
 		int sdkVersion = Build.VERSION.SDK_INT;
 		ContentResolver contentResolver = context.getContentResolver();
+		boolean isModify = false;
 		if (sdkVersion < 8) {
 			try {
 				Cursor cusor = null;
@@ -318,13 +350,13 @@ public class PFConcactMan {
 						String emailWhere = android.provider.Contacts.ContactMethods.PERSON_ID + "=? ";
 						String[] emailWhereParams = { id };
 						contentResolver.update(android.provider.Contacts.ContactMethods.CONTENT_URI, values, emailWhere, emailWhereParams);
+						isModify = true;
 					}
 				}
 				if (cusor != null)
 					cusor.close();
-				Toast.makeText(context, finder.getString(context, "plugin_contact_modify_succeed"), Toast.LENGTH_SHORT).show();
 			} catch (Exception e) {
-				Toast.makeText(context, finder.getString(context, "plugin_contact_modify_fail"), Toast.LENGTH_SHORT).show();
+				ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
 				return false;
 			}
 		} else if (sdkVersion < 14) {
@@ -359,13 +391,13 @@ public class PFConcactMan {
 						String emailWhere = android.provider.ContactsContract.Data.RAW_CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
 						String[] emailSelection = new String[] { id, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
 						context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
+						isModify = true;
 					}
 				}
 				if (cur != null)
 					cur.close();
-				Toast.makeText(context, finder.getString(context, "plugin_contact_modify_succeed"), Toast.LENGTH_SHORT).show();
 			} catch (Exception e) {
-				Toast.makeText(context, finder.getString(context, "plugin_contact_modify_fail"), Toast.LENGTH_SHORT).show();
+				ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
 			}
 		} else {
 			try {
@@ -397,7 +429,7 @@ public class PFConcactMan {
 						String emailWhere = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
 						String[] emailSelection = new String[] { id, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
 						context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
-
+						isModify = true;
 					}
 				}
 				if (cur != null)
@@ -430,7 +462,7 @@ public class PFConcactMan {
 						String emailWhere = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
 						String[] emailSelection = new String[] { id, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
 						context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
-
+						isModify = true;
 					}
 				}
 				if (cursor != null)
@@ -471,22 +503,25 @@ public class PFConcactMan {
 							String emailWhere = android.provider.Contacts.ContactMethods.PERSON_ID + "=? ";
 							String[] emailWhereParams = { id };
 							contentResolver.update(android.provider.Contacts.ContactMethods.CONTENT_URI, values, emailWhere, emailWhereParams);
+							isModify = true;
 						}
 					}
 					if (cusor != null)
 						cusor.close();
-					Toast.makeText(context, finder.getString(context, "plugin_contact_modify_succeed"), Toast.LENGTH_SHORT).show();
 				} catch (Exception e) {
-					Toast.makeText(context, finder.getString(context, "plugin_contact_modify_fail"), Toast.LENGTH_SHORT).show();
+					ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
 					return false;
 				}
-				Toast.makeText(context, finder.getString(context, "plugin_contact_modify_succeed"), Toast.LENGTH_SHORT).show();
 			} catch (Exception e) {
-				Toast.makeText(context, finder.getString(context, "plugin_contact_modify_fail"), Toast.LENGTH_SHORT).show();
+				ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
 			}
 		}
-
-		return true;
+		if(isModify){
+			ToastShow(context, finder.getString(context, "plugin_contact_modify_succeed"));
+		}else{
+			ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
+		}
+		return isModify;
 	}
 
 	public static boolean add(Context context, Map content, Object accountType, Object accountName) {
@@ -658,5 +693,15 @@ public class PFConcactMan {
 		}
 		url.close();
 		url = null;
+	}
+	
+	private static void ToastShow(final Context context,final String content){
+		((Activity)context).runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				Toast.makeText(context, "" + content, Toast.LENGTH_SHORT).show();
+			}
+		});
 	}
 }
