@@ -31,6 +31,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.zywx.wbpalmstar.base.ResoureFinder;
 import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
+import org.zywx.wbpalmstar.plugin.uexcontacts.vo.ModifyOptionVO;
+import org.zywx.wbpalmstar.plugin.uexcontacts.vo.SearchOptionVO;
 
 import android.app.Activity;
 import android.content.ContentProviderOperation;
@@ -50,7 +52,22 @@ import android.widget.Toast;
 
 public class PFConcactMan {
 	private static ResoureFinder finder = ResoureFinder.getInstance();
-
+	private final static String[] CONTACTOR_NAME_ION = new String[] {
+			android.provider.ContactsContract.Contacts.DISPLAY_NAME,
+			android.provider.ContactsContract.Contacts._ID };
+	private final static String[] CONTACTOR_NUMBER_ION = new String[] { ContactsContract.CommonDataKinds.Phone.NUMBER };
+	private final static String[] CONTACTOR_EMAILS_ION = new String[] { ContactsContract.CommonDataKinds.Email.DATA };
+	private final static String[] CONTACTOR_ADDRESS_ION = new String[] {
+		ContactsContract.CommonDataKinds.StructuredPostal.STREET,
+			ContactsContract.CommonDataKinds.StructuredPostal.CITY,
+			ContactsContract.CommonDataKinds.StructuredPostal.REGION,
+			ContactsContract.CommonDataKinds.StructuredPostal.POSTCODE,
+			ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS };
+	private final static String[] CONTACTOR_ORGANIZATIONS_ION = new String[] {
+			Organization.COMPANY, Organization.TITLE };
+	private final static String[] CONTACTOR_NOTES_ION = new String[] { Data._ID, Note.NOTE };
+	private final static String[] CONTACTOR_URL_ION = new String[] {Data._ID, Website.URL};
+	
 	/*
 	 * 添加联系人name,num,email内容
 	 */
@@ -124,7 +141,9 @@ public class PFConcactMan {
 		try {
 			ContentResolver contentResolver = context.getContentResolver();
 			if (inName != null) {
-				JSONArray jsonsArray = search(context, inName);
+				SearchOptionVO searchOptionVO = new SearchOptionVO(500, "",
+						inName, false, false, false, false, false, false, false);
+				JSONArray jsonsArray = search(context, searchOptionVO);
 				if (jsonsArray!=null && jsonsArray.length()>0) {
 					int length = jsonsArray.length();
 					boolean hasName = false;
@@ -200,10 +219,47 @@ public class PFConcactMan {
 	}
 
 	/*
-	 * 查找联系人根据inName人名参数
+	 * 根据id删除联系人列表中的信息
 	 */
-	public static /*JSONObject*/JSONArray search(Context context, String inName) {
+	public static boolean deletesWithContactId(Context context, String contactId) {
+		int result = -1;
+		try {
+			ContentResolver contentResolver = context.getContentResolver();
+			int sdkVersion = Build.VERSION.SDK_INT;
+			if (sdkVersion <= 8) {// 小于2.2版本
+				result = contentResolver.delete(
+						android.provider.Contacts.People.CONTENT_URI,
+						android.provider.Contacts.People._ID + "=?",
+						new String[] { contactId });
+			} else if (sdkVersion < 14) {// 小于4.0版本
+				result = contentResolver
+						.delete(android.content.ContentUris
+								.withAppendedId(
+										android.provider.ContactsContract.Contacts.CONTENT_URI,
+										Long.parseLong(contactId)), null, null);
+			} else {
+				result = contentResolver
+						.delete(android.content.ContentUris
+								.withAppendedId(
+										android.provider.ContactsContract.Contacts.CONTENT_URI,
+										Long.parseLong(contactId)), null, null);
+			}
+			if(result > 0){
+				ToastShow(context, finder.getString(context, "plugin_contact_delete_succeed"));
+			}else{
+				ToastShow(context, finder.getString(context, "plugin_contact_delete_fail"));
+			}
+		} catch (Exception e) {
+			ToastShow(context, finder.getString(context, "plugin_contact_delete_fail"));
+		}
+		return result > 0 ? true : false;
+	}
+
+	public static /*JSONObject*/JSONArray search(Context context, SearchOptionVO searchOptionVO) {
 		ContentResolver cr = context.getContentResolver();
+		String inName = searchOptionVO.getSearchName();
+		String searchContactId = searchOptionVO.getContactId();
+		boolean isSearchContactWithId = false;
 		/* 1.6 */
 		JSONArray jsonArray = new JSONArray();
 		int sdkVersion = Build.VERSION.SDK_INT;
@@ -222,11 +278,15 @@ public class PFConcactMan {
 						contactName = contactName.replaceAll(" ", "");
 						sb.append(contactName);
 					}
-
-					if ((sb.length() > 0 && sb.toString().indexOf(inName)>-1) || inName.length()==0) {
+					isSearchContactWithId = searchContactId.equals(id);
+					if (isSearchContactWithId || ((sb.length() > 0 && sb.toString().indexOf(inName)>-1) || inName.length()==0)) {
+						if(isSearchContactWithId){
+							jsonArray = new JSONArray();
+						}
 						// 名字
 						jsonObject.put(EUExCallback.F_JK_NAME, sb.toString());
 						sb.delete(0, sb.length());
+						jsonObject.put(EUExContact.JK_KEY_CONTACT_ID, id);
 						// 电话
 						Cursor pCur = cr.query(android.provider.Contacts.Phones.CONTENT_URI, null, android.provider.Contacts.Phones.PERSON_ID + " = ?", new String[] { id }, null);
 						if (pCur.moveToNext())
@@ -243,11 +303,14 @@ public class PFConcactMan {
 						sb.delete(0, sb.length());
 
 						sb.delete(0, sb.length());
-						getValueWithName(context, id, jsonObject);
+						getValueWithName(context, id, jsonObject,searchOptionVO);
 						ToastShow(context, finder.getString(context, "plugin_contact_find_succeed"));
 					}
 					sb.delete(0, sb.length());
 					jsonArray.put(jsonObject);
+					if(isSearchContactWithId){
+						break;
+					}
 				}
 				sb.delete(0, sb.length());
 			} catch (Exception e) {
@@ -258,43 +321,62 @@ public class PFConcactMan {
 					cur.close();
 			}
 		} else {
-			Cursor cursor = cr.query(android.provider.ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+			String selection = null;
+			String[] selectionArgs = null;
+			String orderBy = null;
+			if (!TextUtils.isEmpty(searchContactId)) {
+				selection = android.provider.ContactsContract.Contacts._ID + " = ? ";
+				selectionArgs = new String[] { searchContactId };
+				isSearchContactWithId = true;
+			} else if (inName != null) {
+				selection = ContactsContract.Contacts.DISPLAY_NAME + " like ? ";
+				selectionArgs = new String[] { "%" + inName + "%" };
+			}
+			if(searchOptionVO.getResultNum() > 0){
+				//orderBy = android.provider.ContactsContract.Contacts._ID + " asc limit " + searchOptionVO.getResultNum();
+			}
+			Cursor cursor = cr.query(android.provider.ContactsContract.Contacts.CONTENT_URI, CONTACTOR_NAME_ION, selection, selectionArgs, orderBy);
 			try {
 				if (cursor != null && cursor.getCount() > 0) {
 					cursor.moveToFirst();
 					do {
 						String name = cursor.getString(cursor.getColumnIndex(android.provider.ContactsContract.Contacts.DISPLAY_NAME));
 						String contactId = cursor.getString(cursor.getColumnIndex(android.provider.ContactsContract.Contacts._ID));
+						
 						String contactName = name;// 系统名字
 						if (contactName != null && contactName.indexOf(" ") != -1) {// 如果有空格去掉空格（无论在中间还是在两边）
 							contactName = contactName.replaceAll(" ", "");
 							name = contactName;
 						}
-						if (name!=null&&(name.indexOf(inName)>-1/*equals(inName)*/ || inName.length()==0)) {// 如果和输入的名字相同就取得内容
+						if (isSearchContactWithId || (name!=null&&(name.indexOf(inName)>-1/*equals(inName)*/ || inName.length()==0))) {// 如果和输入的名字相同就取得内容
 							JSONObject jsonObject = new JSONObject();
 							jsonObject.put(EUExCallback.F_JK_NAME, name);
+							
+							jsonObject.put(EUExContact.JK_KEY_CONTACT_ID, contactId);
 							// 取得电话
-							Cursor phones = ((Activity) context).getContentResolver().query(android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId, null, null);
-							if (phones != null && phones.getCount() > 0) {
-								phones.moveToFirst();
-								String phoneNumber = phones.getString(phones.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
-								jsonObject.put(EUExCallback.F_JK_NUM, phoneNumber);
-								phones.close();
+							if(searchOptionVO.isSearchNum()){
+								Cursor phones = ((Activity) context).getContentResolver().query(android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI, CONTACTOR_NUMBER_ION, android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId, null, null);
+								if (phones != null && phones.getCount() > 0) {
+									phones.moveToFirst();
+									String phoneNumber = phones.getString(phones.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
+									jsonObject.put(EUExCallback.F_JK_NUM, phoneNumber);
+									phones.close();
+								}
 							}
 							// 取得邮件
-							Cursor emails = ((Activity) context).getContentResolver().query(android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, android.provider.ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = " + contactId, null, null);
-							if (emails != null && emails.getCount() > 0) {
-								emails.moveToFirst();
-								String emailAddress = emails.getString(emails.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Email.DATA));
-								jsonObject.put(EUExCallback.F_JK_EMAIL, emailAddress);
-								emails.close();
+							if(searchOptionVO.isSearchEmail()){
+								Cursor emails = ((Activity) context).getContentResolver().query(android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_URI, CONTACTOR_EMAILS_ION, android.provider.ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = " + contactId, null, null);
+								if (emails != null && emails.getCount() > 0) {
+									emails.moveToFirst();
+									String emailAddress = emails.getString(emails.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Email.DATA));
+									jsonObject.put(EUExCallback.F_JK_EMAIL, emailAddress);
+									emails.close();
+								}
 							}
-							getValueWithName(context, contactId, jsonObject);
+							getValueWithName(context, contactId, jsonObject,searchOptionVO);
 							jsonArray.put(jsonObject);
 						}
-
 					} while (cursor.moveToNext());
-
 				}
 			} catch (Exception e) {
 				ToastShow(context, finder.getString(context, "plugin_contact_find_fail"));
@@ -430,6 +512,7 @@ public class PFConcactMan {
 						String[] emailSelection = new String[] { id, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
 						context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
 						isModify = true;
+						break;
 					}
 				}
 				if (cur != null)
@@ -463,6 +546,7 @@ public class PFConcactMan {
 						String[] emailSelection = new String[] { id, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
 						context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
 						isModify = true;
+						break;
 					}
 				}
 				if (cursor != null)
@@ -504,6 +588,7 @@ public class PFConcactMan {
 							String[] emailWhereParams = { id };
 							contentResolver.update(android.provider.Contacts.ContactMethods.CONTENT_URI, values, emailWhere, emailWhereParams);
 							isModify = true;
+							break;
 						}
 					}
 					if (cusor != null)
@@ -524,6 +609,215 @@ public class PFConcactMan {
 		return isModify;
 	}
 
+	public static boolean modify(Context context, ModifyOptionVO modifyOptionVO) {
+		String contactId = modifyOptionVO.getContactId();
+		String inName = modifyOptionVO.getName();
+		String inNum = modifyOptionVO.getNum();
+		String inEmail = modifyOptionVO.getEmail();
+		int sdkVersion = Build.VERSION.SDK_INT;
+		
+		ContentResolver contentResolver = context.getContentResolver();
+		boolean isModify = false;
+		if (sdkVersion < 8) {
+			try {
+				Cursor cusor = null;
+				String[] projection = new String[] { android.provider.Contacts.People._ID, android.provider.Contacts.People.NAME, android.provider.Contacts.People.NUMBER };
+				String selection = android.provider.Contacts.People._ID + " = ? ";
+				String[] selectionArgs = new String[] { contactId };
+				cusor = contentResolver.query(android.provider.Contacts.People.CONTENT_URI, projection, selection, selectionArgs, null);
+				cusor.moveToFirst();
+
+				while (cusor.moveToNext()) {
+					ContentValues values = new ContentValues();
+					String nameWhere = android.provider.Contacts.Phones.PERSON_ID
+							+ "=? ";
+					values.put(android.provider.Contacts.People.NAME, inName);
+					contentResolver.update(android.provider.Contacts.People.CONTENT_URI, values,nameWhere,selectionArgs);
+					
+					// 电话（根据type类型不同，可以修改不同类型电话）
+					values.clear();
+					values.put(android.provider.Contacts.Phones.TYPE,
+							android.provider.Contacts.Phones.TYPE_MOBILE);
+					values.put(android.provider.Contacts.Phones.NUMBER, inNum);
+					String numWhere = android.provider.Contacts.Phones.PERSON_ID
+							+ "=? ";
+					contentResolver.update(
+							android.provider.Contacts.Phones.CONTENT_URI,
+							values, numWhere, selectionArgs);
+
+					// 邮件（根据type类型不同，可以修改不同类型邮件）
+					values.clear();
+					values.put(android.provider.Contacts.ContactMethods.KIND,
+							android.provider.Contacts.KIND_EMAIL);
+					values.put(android.provider.Contacts.ContactMethods.DATA,
+							inEmail);
+					values.put(android.provider.Contacts.ContactMethods.TYPE,
+							android.provider.Contacts.ContactMethods.TYPE_HOME);
+					String emailWhere = android.provider.Contacts.ContactMethods.PERSON_ID
+							+ "=? ";
+					contentResolver
+							.update(android.provider.Contacts.ContactMethods.CONTENT_URI,
+									values, emailWhere, selectionArgs);
+					isModify = true;
+				}
+				if (cusor != null)
+					cusor.close();
+			} catch (Exception e) {
+				ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
+				return false;
+			}
+		} else if (sdkVersion < 14) {
+			try {
+				String[] projection = new String[] { android.provider.ContactsContract.Contacts.DISPLAY_NAME, android.provider.ContactsContract.Contacts._ID};
+				String selection = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? ";
+				String[] selectionArgs = new String[] { contactId };
+				Cursor cur = contentResolver.query(android.provider.ContactsContract.RawContacts.CONTENT_URI, projection, selection, selectionArgs, null);
+				cur.moveToFirst();
+				while (cur.moveToNext()) {
+					ContentValues values = new ContentValues();
+					values.clear();
+					values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
+					values.put(android.provider.ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, inName);
+					String nameWhere = android.provider.ContactsContract.Data.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] nameSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE };
+					context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, nameWhere, nameSelection);
+					
+					values.clear();
+					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER, inNum);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.TYPE, android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE);
+					String numWhere = android.provider.ContactsContract.Data.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] numSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, };
+					context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, numWhere, numSelection);
+
+					values.clear();
+					values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Email.DATA, inEmail);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Email.TYPE, android.provider.ContactsContract.CommonDataKinds.Email.TYPE_WORK);
+					String emailWhere = android.provider.ContactsContract.Data.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] emailSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
+					context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
+					isModify = true;
+				}
+				if (cur != null)
+					cur.close();
+			} catch (Exception e) {
+				ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
+			}
+		} else {
+			try {
+				String[] projection = new String[] { android.provider.ContactsContract.Contacts.DISPLAY_NAME, android.provider.ContactsContract.RawContacts._ID};
+				String selection = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? ";
+				String[] selectionArgs = new String[] { contactId };
+				Cursor cur = contentResolver.query(android.provider.ContactsContract.RawContacts.CONTENT_URI, projection, selection, selectionArgs, null);
+				while (cur.moveToNext()) {
+					ContentValues values = new ContentValues();
+					values.clear();
+					values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
+					values.put(android.provider.ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, inName);
+					String nameWhere = android.provider.ContactsContract.Data.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] nameSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE };
+					int resultId = context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, nameWhere, nameSelection);
+					
+					values.clear();
+					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER, inNum);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.TYPE, android.provider.ContactsContract.PhoneLookup.NUMBER);
+					String numWhere = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] numSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, };
+					int resultId1 = context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, numWhere, numSelection);
+					
+					values.clear();
+					values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Email.DATA, inEmail);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Email.TYPE, android.provider.ContactsContract.CommonDataKinds.Email.TYPE_WORK);
+
+					String emailWhere = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] emailSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
+					int resultId2 = context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
+					isModify = true;
+				}
+				if (cur != null)
+					cur.close();
+				projection = new String[] { android.provider.ContactsContract.Contacts.DISPLAY_NAME, android.provider.ContactsContract.Contacts._ID};
+				selection = android.provider.ContactsContract.Contacts._ID + " = ? ";
+				Cursor cursor = context.getContentResolver().query(android.provider.ContactsContract.Contacts.CONTENT_URI, projection, selection,selectionArgs, null);
+				while (cursor.moveToNext()) {
+					ContentValues values = new ContentValues();
+					values.clear();
+					values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
+					values.put(android.provider.ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, inName);
+					String nameWhere = android.provider.ContactsContract.Data.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] nameSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE };
+					int resultId3 = context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, nameWhere, nameSelection);
+					
+					values.clear();
+					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER, inNum);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.TYPE, android.provider.ContactsContract.PhoneLookup.NUMBER);
+					String numWhere = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] numSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, };
+					int resultId4 = context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, numWhere, numSelection);
+
+					values.clear();
+					values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Email.DATA, inEmail);
+					values.put(android.provider.ContactsContract.CommonDataKinds.Email.TYPE, android.provider.ContactsContract.CommonDataKinds.Email.TYPE_WORK);
+					String emailWhere = android.provider.ContactsContract.RawContacts.CONTACT_ID + " = ? AND " + android.provider.ContactsContract.Data.MIMETYPE + " = ?";
+					String[] emailSelection = new String[] { contactId, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, };
+					int resultId5 = context.getContentResolver().update(android.provider.ContactsContract.Data.CONTENT_URI, values, emailWhere, emailSelection);
+					isModify = true;
+				}
+				if (cursor != null)
+					cursor.close();
+				try {
+					Cursor cusor = null;
+					projection = new String[] { android.provider.Contacts.People._ID, android.provider.Contacts.People.NAME, android.provider.Contacts.People.NUMBER };
+					selection = android.provider.Contacts.People._ID + " = ? ";
+					cusor = contentResolver.query(android.provider.Contacts.People.CONTENT_URI, projection, selection, selectionArgs, null);
+					cusor.moveToFirst();
+
+					while (cusor.moveToNext()) {
+						ContentValues values = new ContentValues();
+						String nameWhere = android.provider.Contacts.Phones.PERSON_ID
+								+ "=? ";
+						values.put(android.provider.Contacts.People.NAME, inName);
+						contentResolver.update(android.provider.Contacts.People.CONTENT_URI, values,nameWhere,selectionArgs);
+						
+						// 电话（根据type类型不同，可以修改不同类型电话）
+						values.clear();
+						values.put(android.provider.Contacts.Phones.TYPE, android.provider.Contacts.Phones.TYPE_MOBILE);
+						values.put(android.provider.Contacts.Phones.NUMBER, inNum);
+						String numWhere = android.provider.Contacts.Phones.PERSON_ID + "=? ";
+						String[] numWhereParams = { contactId };
+						contentResolver.update(android.provider.Contacts.Phones.CONTENT_URI, values, numWhere, numWhereParams);
+
+						// 邮件（根据type类型不同，可以修改不同类型邮件）
+						values.clear();
+						values.put(android.provider.Contacts.ContactMethods.KIND, android.provider.Contacts.KIND_EMAIL);
+						values.put(android.provider.Contacts.ContactMethods.DATA, inEmail);
+						values.put(android.provider.Contacts.ContactMethods.TYPE, android.provider.Contacts.ContactMethods.TYPE_HOME);
+						String emailWhere = android.provider.Contacts.ContactMethods.PERSON_ID + "=? ";
+						String[] emailWhereParams = { contactId };
+						contentResolver.update(android.provider.Contacts.ContactMethods.CONTENT_URI, values, emailWhere, emailWhereParams);
+						isModify = true;
+					}
+					if (cusor != null)
+						cusor.close();
+				} catch (Exception e) {
+					ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
+					return false;
+				}
+			} catch (Exception e) {
+				ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
+			}
+		}
+		if(isModify){
+			ToastShow(context, finder.getString(context, "plugin_contact_modify_succeed"));
+		}else{
+			ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
+		}
+		return isModify;
+	}
+
+	
 	public static boolean add(Context context, Map content, Object accountType, Object accountName) {
 		if (content == null || content.size() == 0) {
 			return false;
@@ -592,107 +886,110 @@ public class PFConcactMan {
 		return true;
 	}
 
-	public static void getValueWithName(Context context, String id, JSONObject jsonobject) {
+	public static void getValueWithName(Context context, String id, JSONObject jsonobject ,SearchOptionVO searchOptionVO) {
 		// 获取该联系人地址
-		Cursor address = context.getContentResolver().query(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + id, null, null);
-		if (address.moveToFirst()) {
-			do {
-				// 遍历所有的地址
-				String street = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.STREET));
-				String city = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.CITY));
-				String region = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.REGION));
-				String postCode = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.POSTCODE));
-				String formatAddress = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS));
-
-				try {
-					JSONObject addressjson = new JSONObject();
-					addressjson.put(EUExCallback.F_JK_STREET, street);
-					addressjson.put(EUExCallback.F_JK_ZIP, postCode);
-					addressjson.put(EUExCallback.F_JK_STATE, region);
-					addressjson.put(EUExCallback.F_JK_STATE, region);
-					jsonobject.put(EUExCallback.F_JK_ADDRESS, addressjson);
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-
-			} while (address.moveToNext());
-		} else {
-			try {
-				JSONObject addressjson = new JSONObject();
-				addressjson.put(EUExCallback.F_JK_STREET, "");
-				addressjson.put(EUExCallback.F_JK_ZIP, "");
-				addressjson.put(EUExCallback.F_JK_STATE, "");
-				addressjson.put(EUExCallback.F_JK_STATE, "");
-				jsonobject.put(EUExCallback.F_JK_ADDRESS, addressjson);
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
+		try {
+			JSONObject addressjson = new JSONObject();
+			addressjson.put(EUExCallback.F_JK_STREET, "");
+			addressjson.put(EUExCallback.F_JK_ZIP, "");
+			addressjson.put(EUExCallback.F_JK_STATE, "");
+			jsonobject.put(EUExCallback.F_JK_ADDRESS, addressjson);
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
-		address.close();
-		address = null;
+		if(searchOptionVO.isSearchAddress()){
+			Cursor address = context.getContentResolver().query(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_URI, CONTACTOR_ADDRESS_ION, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + id, null, null);
+			if (address.moveToFirst()) {
+				do {
+					// 遍历所有的地址
+					String street = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.STREET));
+					String city = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.CITY));
+					String region = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.REGION));
+					String postCode = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.POSTCODE));
+					String formatAddress = address.getString(address.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS));
+
+					try {
+						JSONObject addressjson = new JSONObject();
+						addressjson.put(EUExCallback.F_JK_STREET, street);
+						addressjson.put(EUExCallback.F_JK_ZIP, postCode);
+						addressjson.put(EUExCallback.F_JK_STATE, region);
+						jsonobject.put(EUExCallback.F_JK_ADDRESS, addressjson);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+
+				} while (address.moveToNext());
+			} 
+			address.close();
+			address = null;
+		}
 		// 获取该联系人组织
-		Cursor organizations = context.getContentResolver().query(Data.CONTENT_URI, new String[] { Data._ID, Organization.COMPANY, Organization.TITLE }, Data.CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='" + Organization.CONTENT_ITEM_TYPE + "'", new String[] { id }, null);
-		if (organizations.moveToFirst()) {
-			do {
-				String company = organizations.getString(organizations.getColumnIndex(Organization.COMPANY));
-				String title = organizations.getString(organizations.getColumnIndex(Organization.TITLE));
-				try {
-					jsonobject.put(EUExCallback.F_JK_COMPANY, company);
-					jsonobject.put(EUExCallback.F_JK_TITLE, title);
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			} while (organizations.moveToNext());
-		} else {
-			try {
-				jsonobject.put(EUExCallback.F_JK_COMPANY, "");
-				jsonobject.put(EUExCallback.F_JK_TITLE, "");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
+		try {
+			jsonobject.put(EUExCallback.F_JK_COMPANY, "");
+			jsonobject.put(EUExCallback.F_JK_TITLE, "");
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
-		organizations.close();
-		organizations = null;
+		if(searchOptionVO.isSearchCompany() || searchOptionVO.isSearchTitle()){
+			Cursor organizations = context.getContentResolver().query(Data.CONTENT_URI, CONTACTOR_ORGANIZATIONS_ION , Data.CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='" + Organization.CONTENT_ITEM_TYPE + "'", new String[] { id }, null);
+			if (organizations.moveToFirst()) {
+				do {
+					String company = organizations.getString(organizations.getColumnIndex(Organization.COMPANY));
+					String title = organizations.getString(organizations.getColumnIndex(Organization.TITLE));
+					try {
+						jsonobject.put(EUExCallback.F_JK_COMPANY, company);
+						jsonobject.put(EUExCallback.F_JK_TITLE, title);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+				} while (organizations.moveToNext());
+			}
+			organizations.close();
+			organizations = null;
+		}
 		// 获取备注信息
-		Cursor notes = context.getContentResolver().query(Data.CONTENT_URI, new String[] { Data._ID, Note.NOTE }, Data.CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='" + Note.CONTENT_ITEM_TYPE + "'", new String[] { id }, null);
-		if (notes.moveToFirst()) {
-			do {
-				String noteinfo = notes.getString(notes.getColumnIndex(Note.NOTE));
-				try {
-					jsonobject.put(EUExCallback.F_JK_NOTE, noteinfo);
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			} while (notes.moveToNext());
-		} else {
-			try {
-				jsonobject.put(EUExCallback.F_JK_NOTE, "");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
+		try {
+			jsonobject.put(EUExCallback.F_JK_NOTE, "");
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
-		notes.close();
-		notes = null;
+		if(searchOptionVO.isSearchNote()){
+			Cursor notes = context.getContentResolver().query(Data.CONTENT_URI, CONTACTOR_NOTES_ION , Data.CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='" + Note.CONTENT_ITEM_TYPE + "'", new String[] { id }, null);
+			if (notes.moveToFirst()) {
+				do {
+					String noteinfo = notes.getString(notes.getColumnIndex(Note.NOTE));
+					try {
+						jsonobject.put(EUExCallback.F_JK_NOTE, noteinfo);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+				} while (notes.moveToNext());
+			} 
+			notes.close();
+			notes = null;
+		}
 		// url
-		Cursor url = context.getContentResolver().query(Data.CONTENT_URI, new String[] { Data._ID, Website.URL }, Data.CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='" + Website.CONTENT_ITEM_TYPE + "'", new String[] { id }, null);
-		if (url.moveToFirst()) {
-			do {
-				String urlString = url.getString(url.getColumnIndex(Website.URL));
-				try {
-					jsonobject.put(EUExCallback.F_JK_URL, urlString);
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			} while (url.moveToNext());
-		} else {
-			try {
-				jsonobject.put(EUExCallback.F_JK_URL, "");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
+		try {
+			jsonobject.put(EUExCallback.F_JK_URL, "");
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
-		url.close();
-		url = null;
+		if(searchOptionVO.isSearchUrl()){
+			Cursor url = context.getContentResolver().query(Data.CONTENT_URI, CONTACTOR_URL_ION, Data.CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='" + Website.CONTENT_ITEM_TYPE + "'", new String[] { id }, null);
+			if (url.moveToFirst()) {
+				do {
+					String urlString = url.getString(url.getColumnIndex(Website.URL));
+					try {
+						jsonobject.put(EUExCallback.F_JK_URL, urlString);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+				} while (url.moveToNext());
+			} else {
+			}
+			url.close();
+			url = null;
+		}
 	}
 	
 	private static void ToastShow(final Context context,final String content){

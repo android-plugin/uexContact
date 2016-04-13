@@ -10,6 +10,9 @@
         <method name="deleteItem" />
         <method name="searchItem" />
         <method name="modifyItem" />
+        <method name="deleteWithId" />
+        <method name="search" />
+        <method name="modifyWithId" />
         <method name="addItemWithVCard" />
     </plugin>
 </uexplugins>
