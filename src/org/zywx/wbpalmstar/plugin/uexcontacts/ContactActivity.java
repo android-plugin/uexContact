@@ -28,6 +28,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.zywx.wbpalmstar.base.ResoureFinder;
 import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
+import org.zywx.wbpalmstar.plugin.uexcontacts.vo.SearchOptionVO;
 
 import android.text.TextUtils;
 import android.app.Activity;
@@ -260,7 +261,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 ////									jsonPeople.put(EUExCallback.F_JK_EMAIL, "");
 //								}
 								PFConcactMan.getValueWithName(ContactActivity.this,
-										(String) map.get("contactId"), jsonPeople);
+										(String) map.get("contactId"), jsonPeople,new SearchOptionVO());
 								jsonArray.put(jsonPeople);
 							}
 						}
@@ -512,7 +513,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 							(String) mm.get(EUExCallback.F_JK_EMAIL));
 					try {
 						PFConcactMan.getValueWithName(ContactActivity.this,
-								(String) mm.get("contactId"), jsonPerson);
+								(String) mm.get("contactId"), jsonPerson,new SearchOptionVO());
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

@@ -32,6 +32,8 @@ import org.zywx.wbpalmstar.engine.EBrowserView;
 import org.zywx.wbpalmstar.engine.universalex.EUExBase;
 import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
 import org.zywx.wbpalmstar.plugin.uexcontacts.vo.AddOptionVO;
+import org.zywx.wbpalmstar.plugin.uexcontacts.vo.DeleteOptionVO;
+import org.zywx.wbpalmstar.plugin.uexcontacts.vo.ModifyOptionVO;
 import org.zywx.wbpalmstar.plugin.uexcontacts.vo.SearchOptionVO;
 
 import a_vcard.android.syncml.pim.PropertyNode;
@@ -56,8 +58,14 @@ public class EUExContact extends EUExBase {
     public static final String KEY_CONTACT_OPEN = "uexContact.cbOpen";
     public static final String KEY_CONTACT_MULTIOPEN = "uexContact.cbMultiOpen";
     public static final String KEY_CONTACT_ADD = "uexContact.cbAddItem";
-    public static final String KEY_CONTACT_MODIFY = "uexContact.cbModifyItem";
-    public static final String KEY_CONTACT_DELETE = "uexContact.cbDeleteItem";
+    public static final String KEY_CONTACT_MODIFYITEM = "uexContact.cbModifyItem";
+    public static final String KEY_CONTACT_DELETEITEM = "uexContact.cbDeleteItem";
+    public static final String KEY_CONTACT_SEARCH = "uexContact.cbSearch";
+    public static final String KEY_CONTACT_MODIFYWITHID = "uexContact.cbModifyWithId";
+    public static final String KEY_CONTACT_DELETEWITHID = "uexContact.cbDeleteWithId";
+    
+    public static final String JK_KEY_CONTACT_ID = "contactId";
+    public static final String JK_KEY_CONTACT_LIST = "contactList";
 
     public static final int F_ACT_REQ_CODE_UEX_CONTACT = 2;
     public static final int F_ACT_REQ_CODE_UEX_MULTI_CONTACT = 9;
@@ -222,9 +230,7 @@ public class EUExContact extends EUExBase {
                             				addContact(inName, inNum, inEmail);
                             			}
                             		}).start();
-                                    
                                 }
-
                             })
                     .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
                     .show();
@@ -259,6 +265,52 @@ public class EUExContact extends EUExBase {
                     EUExCallback.F_C_FAILED);
         }
     }
+    
+    public void deleteWithId(final String[] parm) {
+    	if (parm == null || parm.length != 1)
+            return;
+    	new AlertDialog.Builder(mContext)
+    	.setTitle(/* "提示" */finder.getStringId("prompt"))
+        .setMessage(
+                /* "是否删除联系人" */finder
+                .getStringId("plugin_contact_delete_prompt"))
+        .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog,
+                                        int which) {
+                    	new Thread(new Runnable() {
+                			
+                			@Override
+                			public void run() {
+                				DeleteOptionVO deleteOptionVO = null;
+                				try {
+                					deleteOptionVO = DataHelper.gson.fromJson(parm[0],
+                							DeleteOptionVO.class);
+                				} catch (Exception e) {
+                				}
+                				if (deleteOptionVO != null) {
+                                    if (PFConcactMan.deletesWithContactId(mContext, deleteOptionVO.getContactId())) {
+                                        jsCallback(KEY_CONTACT_DELETEWITHID, 0,
+                                                EUExCallback.F_C_INT,
+                                                EUExCallback.F_C_SUCCESS);
+                                    } else {
+                                        jsCallback(KEY_CONTACT_DELETEWITHID, 0,
+                                                EUExCallback.F_C_INT,
+                                                EUExCallback.F_C_FAILED);
+                                    }
+                                } else {
+                                    jsCallback(KEY_CONTACT_DELETEWITHID, 0,
+                                            EUExCallback.F_C_INT,
+                                            EUExCallback.F_C_FAILED);
+                                }
+                			}
+                		}).start();
+                    }
+                })
+        .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+        .show();
+    }
 
     public void deleteItem(String[] parm) {
         if (parm == null || parm.length != 1)
@@ -280,16 +332,16 @@ public class EUExContact extends EUExBase {
                         			public void run() {
                         				if (inName != null && inName.length() > 0) {
                                             if (PFConcactMan.deletes(mContext, inName)) {
-                                                jsCallback(KEY_CONTACT_DELETE, 0,
+                                                jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_SUCCESS);
                                             } else {
-                                                jsCallback(KEY_CONTACT_DELETE, 0,
+                                                jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_FAILED);
                                             }
                                         } else {
-                                            jsCallback(KEY_CONTACT_DELETE, 0,
+                                            jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                     EUExCallback.F_C_INT,
                                                     EUExCallback.F_C_FAILED);
                                         }
@@ -300,6 +352,62 @@ public class EUExContact extends EUExBase {
                 .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
                 .show();
     }
+    
+	public void search(final String[] parm) {
+		if (parm == null || parm.length < 1)
+			return;
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				SearchOptionVO searchOptionVO = null;
+				try {
+					String optionJson = parm[0];
+					searchOptionVO = DataHelper.gson.fromJson(optionJson,
+							SearchOptionVO.class);
+				} catch (Exception e) {
+				}
+				if (searchOptionVO == null) {
+					searchCallback(false, null);
+					return;
+				}
+				int resultNum = searchOptionVO.getResultNum();
+				JSONArray outJsonObj = PFConcactMan.search(mContext,
+						searchOptionVO);
+				if (outJsonObj != null) {
+					if (resultNum == -1 || outJsonObj.length() < resultNum) {
+						searchCallback(true, outJsonObj);
+					} else {
+						int size = outJsonObj.length() / resultNum + 1;
+						int index = 0;
+						for (int i = 0; i < size; i++) {
+							JSONArray jsonArray = new JSONArray();
+							if (i == size - 1) {
+								for (int n = index; n < outJsonObj.length(); n++) {
+									try {
+										jsonArray.put(outJsonObj.get(index++));
+									} catch (JSONException e) {
+										e.printStackTrace();
+									}
+								}
+							} else {
+								for (int j = 0; j < resultNum; j++) {
+									try {
+										jsonArray.put(outJsonObj.get(index++));
+									} catch (JSONException e) {
+										e.printStackTrace();
+									}
+								}
+							}
+							searchCallback(true, outJsonObj);
+						}
+					}
+				} else {
+					searchCallback(false, null);
+				}
+			}
+		}).start();
+	}
 
     public void searchItem(final String[] parm) {
         if (parm == null || parm.length < 1)
@@ -310,16 +418,27 @@ public class EUExContact extends EUExBase {
 			public void run() {
 				String inName = parm[0];
 		        int resultNum = 50;
-		        if (parm.length > 1){
-		            String optionJson = parm[1];
-		            SearchOptionVO searchOptionVO = DataHelper.gson.fromJson(optionJson,
-		                    SearchOptionVO.class);
-		            if (searchOptionVO != null){
-		                resultNum = searchOptionVO.getResultNum();
-		            }
-		        }
+		        SearchOptionVO searchOptionVO = new SearchOptionVO();
+		        /*try {
+		        	searchOptionVO = DataHelper.gson.fromJson(inName,
+							SearchOptionVO.class);
+		        	inName = searchOptionVO.getSearchName();
+				} catch (Exception e) {
+				}*/
+		        try {
+		        	if (parm.length > 1){
+			            String optionJson = parm[1];
+						searchOptionVO = DataHelper.gson.fromJson(optionJson,
+								SearchOptionVO.class);
+			            if (searchOptionVO != null){
+			                resultNum = searchOptionVO.getResultNum();
+			            }
+			        }
+				} catch (Exception e) {
+				}
+		        searchOptionVO.setSearchName(inName);
 		        if (inName != null && inName.length() >= 0) {
-		            JSONArray outJsonObj = PFConcactMan.search(mContext, inName);
+		            JSONArray outJsonObj = PFConcactMan.search(mContext, searchOptionVO);
 		            if (outJsonObj != null) {
 		                if (resultNum == -1){
 		                    jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
@@ -361,7 +480,54 @@ public class EUExContact extends EUExBase {
 			}
 		}).start();
     }
+    
+    public void modifyWithId(final String[] parm) {
+        if (parm == null || parm.length != 1)
+            return;
+        new AlertDialog.Builder(mContext)
+                .setTitle(/* "提示" */finder.getStringId("prompt"))
+                .setMessage(
+                        /* "是否修改联系人" */finder
+                        .getStringId("plugin_contact_modify_prompt"))
+                .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog,
+                                                int which) {
+                            	new Thread(new Runnable() {
+									
+									@Override
+									public void run() {
+										ModifyOptionVO modifyOptionVO = null;
+		                				try {
+		                					modifyOptionVO = DataHelper.gson.fromJson(parm[0],
+		                							ModifyOptionVO.class);
+		                				} catch (Exception e) {
+		                				}
+										if (modifyOptionVO != null) {
+		                                    if (PFConcactMan.modify(mContext, modifyOptionVO)) {
+		                                        jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
+		                                                EUExCallback.F_C_INT,
+		                                                EUExCallback.F_C_SUCCESS);
+		                                    } else {
+		                                        jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
+		                                                EUExCallback.F_C_INT,
+		                                                EUExCallback.F_C_FAILED);
+		                                    }
+		                                } else {
+		                                    jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
+		                                            EUExCallback.F_C_INT,
+		                                            EUExCallback.F_C_FAILED);
+		                                }
+									}
+								}).start();
+                            }
+                        })
+                .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                .show();
+    }
 
+    
     public void modifyItem(String[] parm) {
         if (parm == null || parm.length != 3)
             return;
@@ -386,16 +552,16 @@ public class EUExContact extends EUExBase {
 		                                        && inNum != null && inEmail != null) {
 		                                    if (PFConcactMan.modify(mContext, inName,
 		                                            inNum, inEmail)) {
-		                                        jsCallback(KEY_CONTACT_MODIFY, 0,
+		                                        jsCallback(KEY_CONTACT_MODIFYITEM, 0,
 		                                                EUExCallback.F_C_INT,
 		                                                EUExCallback.F_C_SUCCESS);
 		                                    } else {
-		                                        jsCallback(KEY_CONTACT_MODIFY, 0,
+		                                        jsCallback(KEY_CONTACT_MODIFYITEM, 0,
 		                                                EUExCallback.F_C_INT,
 		                                                EUExCallback.F_C_FAILED);
 		                                    }
 		                                } else {
-		                                    jsCallback(KEY_CONTACT_MODIFY, 0,
+		                                    jsCallback(KEY_CONTACT_MODIFYITEM, 0,
 		                                            EUExCallback.F_C_INT,
 		                                            EUExCallback.F_C_FAILED);
 		                                }
@@ -547,5 +713,22 @@ public class EUExContact extends EUExBase {
         }
         // No match found
         throw new RuntimeException("Unable to find matching authenticator");
+    }
+    
+    private void searchCallback(boolean isSuccess,JSONArray inData){
+    	JSONObject jsonCallback = new JSONObject();
+    	try {
+    		jsonCallback.put(EUExCallback.F_JK_RESULT,
+    				isSuccess ? EUExCallback.F_C_SUCCESS : EUExCallback.F_C_FAILED);
+			jsonCallback.put(JK_KEY_CONTACT_LIST, inData == null ? new JSONArray() : inData);
+		} catch (Exception e) {
+		}
+    	jsJsonCallback(KEY_CONTACT_SEARCH,jsonCallback.toString());
+    }
+    
+    public void jsJsonCallback(String inCallbackName,String inData){
+		String js = SCRIPT_HEADER + "if(" + inCallbackName + "){"
+				+ inCallbackName + "(" + inData + SCRIPT_TAIL;
+    	onCallback(js);
     }
 }
