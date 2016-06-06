@@ -109,12 +109,15 @@ public class PFConcactMan {
 				}
 				// 向data表插入电话数据
 				if (num != "") {
-					values.clear();
-					values.put(android.provider.ContactsContract.Data.RAW_CONTACT_ID, rawContactId);
-					values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER, num);
-					values.put(android.provider.ContactsContract.CommonDataKinds.Phone.TYPE, android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE);
-					context.getContentResolver().insert(android.provider.ContactsContract.Data.CONTENT_URI, values);
+					String[] nums = num.split(";");
+					for (int i = 0; i < nums.length; i++) {
+						values.clear();
+						values.put(android.provider.ContactsContract.Data.RAW_CONTACT_ID, rawContactId);
+						values.put(android.provider.ContactsContract.Data.MIMETYPE, android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+						values.put(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER, nums[i]);
+						values.put(android.provider.ContactsContract.CommonDataKinds.Phone.TYPE, android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE);
+						context.getContentResolver().insert(android.provider.ContactsContract.Data.CONTENT_URI, values);
+					}
 				}
 				// 向data表插入Email数据
 				if (email != "") {
