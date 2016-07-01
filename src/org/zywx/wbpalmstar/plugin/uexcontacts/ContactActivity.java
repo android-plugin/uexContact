@@ -18,10 +18,34 @@
 
 package org.zywx.wbpalmstar.plugin.uexcontacts;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
+import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,38 +54,10 @@ import org.zywx.wbpalmstar.base.ResoureFinder;
 import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
 import org.zywx.wbpalmstar.plugin.uexcontacts.vo.SearchOptionVO;
 
-import android.text.TextUtils;
-import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-
-import android.database.Cursor;
-import android.graphics.drawable.Drawable;
-
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.Window;
-import android.view.View.OnClickListener;
-import android.view.View.OnFocusChangeListener;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ContactActivity extends Activity implements OnClickListener,
 		OnFocusChangeListener {
@@ -173,9 +169,13 @@ public class ContactActivity extends Activity implements OnClickListener,
 									.get(EUExCallback.F_JK_NAME));
 							if (list.get(position).containsKey(
 									EUExCallback.F_JK_NUM)) {
-								holder.num.setText((String) list.get(position)
-										.get(EUExCallback.F_JK_NUM));
-							} else {
+                                try {
+                                    holder.num.setText((String) ((JSONArray)list.get(position)
+                                            .get(EUExCallback.F_JK_NUM)).get(0));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
 								holder.num.setText("");
 							}
 							if (list.get(position).containsKey(
@@ -235,7 +235,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 						if (i.containsKey(IS_SELECT)) {
 							bool = (Boolean) i.get(IS_SELECT);
 						}
-						
+
 						if (bool) {
 							if(map != null){
 								JSONObject jsonPeople = new JSONObject();
@@ -246,9 +246,8 @@ public class ContactActivity extends Activity implements OnClickListener,
 //								}
 
 //								if (i.containsKey(EUExCallback.F_JK_NUM)) {
-									String num = (String) map
-											.get(EUExCallback.F_JK_NUM);
-									jsonPeople.put(EUExCallback.F_JK_NUM, num);
+									jsonPeople.put(EUExCallback.F_JK_NUM, map
+                                            .get(EUExCallback.F_JK_NUM));
 //								} else {
 ////									jsonPeople.put(EUExCallback.F_JK_NUM, "");
 //								}
@@ -442,14 +441,16 @@ public class ContactActivity extends Activity implements OnClickListener,
 								null,
 								android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID
 										+ " = " + contactId, null, null);
+                JSONArray numArray = new JSONArray();
 				while (phones.moveToNext()) {
 					String phoneNumber = phones
 							.getString(phones
 									.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
-					map.put(EUExCallback.F_JK_NUM, phoneNumber);
-					break;
+//                    numList.add(phoneNumber);
+                    numArray.put(phoneNumber);
 				}
-				phones.close();
+                map.put(EUExCallback.F_JK_NUM, numArray);
+                phones.close();
 			}
 			Cursor emails = getContentResolver()
 					.query(android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_URI,
@@ -507,8 +508,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 					JSONObject jsonPerson = new JSONObject();
 					jsonPerson.put(EUExCallback.F_JK_NAME,
 							(String) mm.get(EUExCallback.F_JK_NAME));
-					jsonPerson.put(EUExCallback.F_JK_NUM,
-							(String) mm.get(EUExCallback.F_JK_NUM));
+					jsonPerson.put(EUExCallback.F_JK_NUM, mm.get(EUExCallback.F_JK_NUM));
 					jsonPerson.put(EUExCallback.F_JK_EMAIL,
 							(String) mm.get(EUExCallback.F_JK_EMAIL));
 					try {
@@ -519,7 +519,8 @@ public class ContactActivity extends Activity implements OnClickListener,
 					}
 
 					jsonArray.put(jsonPerson);
-					Intent intent = new Intent(getIntent().getAction());
+                    System.out.println(jsonArray.toString());
+                    Intent intent = new Intent(getIntent().getAction());
 					intent.putExtra(F_INTENT_KEY_RETURN_SELECT_LIST,
 							jsonArray.toString());
 					setResult(Activity.RESULT_OK, intent);
@@ -535,7 +536,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 
 	/*
 	 * (non-Javadoc)所有的button监听
-	 * 
+	 *
 	 * @see android.view.View.OnClickListener#onClick(android.view.View)
 	 */
 	@Override
@@ -577,7 +578,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 
 	/*
 	 * (non-Javadoc)监听autoCompleteTextView的焦点
-	 * 
+	 *
 	 * @see
 	 * android.view.View.OnFocusChangeListener#onFocusChange(android.view.View,
 	 * boolean)

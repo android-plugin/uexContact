@@ -98,6 +98,7 @@
 	}
 	function openContact() {
 	    uexContact.open(function(obj){
+	        alert('data:' + JSON.stringify(obj));
 	        document.getElementById('data').innerHTML = "姓名：" + obj.name
 						+ "<br>电话：" + obj.num + "<br>邮箱：" + obj.email;
 	    });

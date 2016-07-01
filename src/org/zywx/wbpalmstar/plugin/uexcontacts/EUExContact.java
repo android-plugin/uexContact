@@ -130,11 +130,14 @@ public class EUExContact extends EUExBase {
                                             android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID
                                                     + " = " + contactId, null, null);
                             if (phones != null && phones.getCount() > 0) {
-                                phones.moveToFirst();
-                                String phoneNumber = phones
-                                        .getString(phones
-                                                .getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
-                                jobj.put(EUExCallback.F_JK_NUM, phoneNumber);
+                                JSONArray jsonArray = new JSONArray();
+                                while(phones.moveToNext()) {
+                                    String phoneNumber = phones
+                                            .getString(phones
+                                                    .getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
+                                    jsonArray.put(phoneNumber);
+                                }
+                                jobj.put(EUExCallback.F_JK_NUM, jsonArray);
                                 if (phones.isClosed()) {
                                     Log.i("tag", "phones.close()");
                                     phones.close();
