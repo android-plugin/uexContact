@@ -1,37 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="fill_parent">
 
     <RelativeLayout
         android:id="@+id/shelter"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-    </RelativeLayout>
+        android:layout_height="match_parent"></RelativeLayout>
 
     <ScrollView
         android:id="@+id/mam_scrollview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true" >
+        android:layout_centerInParent="true">
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="wrap_content">
 
             <RelativeLayout
                 android:id="@+id/policyRelativeLayout"
                 android:layout_width="270dip"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true" >
-            </RelativeLayout>
+                android:layout_centerHorizontal="true"></RelativeLayout>
 
             <RelativeLayout
                 android:id="@+id/passiveRelativeLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/policyRelativeLayout"
-                android:layout_margin="20dip" >
+                android:layout_margin="20dip">
 
                 <TextView
                     android:id="@+id/passiveTextView"
@@ -46,7 +44,7 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/passiveTextView"
                     android:layout_centerHorizontal="true"
-                    android:background="@drawable/platform_mam_login_bg_shape" >
+                    android:background="@drawable/platform_mam_login_bg_shape">
 
                     <TextView
                         android:id="@+id/passiveTextViewLabel"

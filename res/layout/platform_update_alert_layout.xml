@@ -3,7 +3,7 @@
     android:layout_width="200dip"
     android:layout_height="130dip"
     android:background="@color/black"
-    android:padding="15dip" >
+    android:padding="15dip">
 
     <TextView
         android:id="@+id/platform_update_alert_title_textview"
@@ -41,7 +41,7 @@
         android:layout_below="@+id/platform_update_alert_content_textview"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dip"
-        android:visibility="gone" >
+        android:visibility="gone">
 
         <Button
             android:id="@+id/platform_update_alert_left_button"

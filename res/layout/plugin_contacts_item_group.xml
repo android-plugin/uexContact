@@ -3,15 +3,15 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/plugin_contacts_filelist_item_bg_selector"
-    android:orientation="horizontal" >
-	
-	 	<!-- 首字母 -->  
-	    <TextView  
-	        android:id="@+id/sort_group"  
-	        android:layout_width="fill_parent"  
-	        android:layout_height="wrap_content"  
-	        android:background="#333333"  
-	        android:paddingLeft="10dip"  
-	        android:textColor="#FFFFFF"  />
+    android:orientation="horizontal">
+
+    <!-- 首字母 -->
+    <TextView
+        android:id="@+id/sort_group"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="#333333"
+        android:paddingLeft="10dip"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

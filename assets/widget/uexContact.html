@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
-  <head>
+<head>
     <title>
     </title>
     <meta charset="utf-8">
-    <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport"
+          content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" href="css/ui-base.css">
     <link rel="stylesheet" href="css/ui-box.css">
     <link rel="stylesheet" href="css/ui-color.css">
-	<link rel="stylesheet" href="css/ui-res.css">
+    <link rel="stylesheet" href="css/ui-res.css">
     <link rel="stylesheet" href="css/ui-btn.css">
     <link rel="stylesheet" href="css/index.css">
     <script src="js/zy_control.js">
@@ -192,54 +193,57 @@
 	    uexContact.deleteWithId(JSON.stringify(option));
 	}
 	
-		</script>
-  </head>
+
+    </script>
+</head>
 <body class="um-vp " ontouchstart>
 <div class="tit">Contact</div>
-	<div class="conbor">
-		<div class="consj">
-			<span>1.打开联系人</span>
-			<input class="btn" type="button" value="打开联系人" onclick="uexContact.open();">
-			<span>选择的联系人信息为：</span>
-			<div class="tcxx" id="data"></div>
-			<span>2.添加联系人</span>
-			联系人姓名：<input class="textbox" type="text" value="张三" id="addName"><br>
-			联系人电话：<input class="textbox" type="text" value="13436827900" id="addTel"><br>
-			联系人邮箱：<input class="textbox" type="text" value="widgetone@3g2win.com" id="addMail"><br>
-			<input class="btn" type="button" value="添加联系人" onclick="addContact()">
-			<span>3.删除联系人</span>
-			联系人姓名：<input class="textbox" type="text" value="张三" id="delName">
-			联系人id：<input class="textbox" type="text" value="" id="delId">
-			<input class="btn" type="button" value="使用id精确删除联系人" onclick="deletes()">
-			<input class="btn" type="button" value="删除联系人" onclick="uexContact.deleteItem(document.getElementById('delName').value);">
-			<span>4.查找联系人</span>
-			联系人姓名：<input class="textbox" type="text" value="张三" id="serchName">
-            一次返回多少个联系人信息：<input class="textbox" type="text" value="-1" id="resultNum">
-               通过id去检索：<input class="textbox" type="text" value="" id="contactId">
-			<input class="btn" type="button" value="查找联系人searchItem" onclick="searchContact()">
-			<input class="btn" type="button" value="查找联系人search" onclick="search()">
-			<span>查找联系人的信息为：</span>
-			<div class="tcxx" id="resData"></div>
-			<span>5.修改联系人</span>
-			联系人id：<input class="textbox" type="text" value=""id="modifyId"><br>
-			联系人姓名：<input class="textbox" type="text" value="张三" id="modifyName"><br>
-			联系人电话：<input class="textbox" type="text" value="13436820000"id="modifyTel"><br>
-			联系人邮箱：<input class="textbox" type="text" value="widgetone1@3g2win.com"id="modifyMail"><br>
-			<input class="btn" type="button" value="使用id精确修改联系人" onclick="modify()">
-			<input class="btn" type="button" value="修改联系人" onclick="uexContact.modifyItem(document.getElementById('modifyName').value,document.getElementById('modifyTel').value,
+<div class="conbor">
+    <div class="consj">
+        <span>1.打开联系人</span>
+        <input class="btn" type="button" value="打开联系人" onclick="uexContact.open();">
+        <span>选择的联系人信息为：</span>
+        <div class="tcxx" id="data"></div>
+        <span>2.添加联系人</span>
+        联系人姓名：<input class="textbox" type="text" value="张三" id="addName"><br>
+        联系人电话：<input class="textbox" type="text" value="13436827900" id="addTel"><br>
+        联系人邮箱：<input class="textbox" type="text" value="widgetone@3g2win.com" id="addMail"><br>
+        <input class="btn" type="button" value="添加联系人" onclick="addContact()">
+        <span>3.删除联系人</span>
+        联系人姓名：<input class="textbox" type="text" value="张三" id="delName">
+        联系人id：<input class="textbox" type="text" value="" id="delId">
+        <input class="btn" type="button" value="使用id精确删除联系人" onclick="deletes()">
+        <input class="btn" type="button" value="删除联系人"
+               onclick="uexContact.deleteItem(document.getElementById('delName').value);">
+        <span>4.查找联系人</span>
+        联系人姓名：<input class="textbox" type="text" value="张三" id="serchName">
+        一次返回多少个联系人信息：<input class="textbox" type="text" value="-1" id="resultNum">
+        通过id去检索：<input class="textbox" type="text" value="" id="contactId">
+        <input class="btn" type="button" value="查找联系人searchItem" onclick="searchContact()">
+        <input class="btn" type="button" value="查找联系人search" onclick="search()">
+        <span>查找联系人的信息为：</span>
+        <div class="tcxx" id="resData"></div>
+        <span>5.修改联系人</span>
+        联系人id：<input class="textbox" type="text" value="" id="modifyId"><br>
+        联系人姓名：<input class="textbox" type="text" value="张三" id="modifyName"><br>
+        联系人电话：<input class="textbox" type="text" value="13436820000" id="modifyTel"><br>
+        联系人邮箱：<input class="textbox" type="text" value="widgetone1@3g2win.com" id="modifyMail"><br>
+        <input class="btn" type="button" value="使用id精确修改联系人" onclick="modify()">
+        <input class="btn" type="button" value="修改联系人" onclick="uexContact.modifyItem(document.getElementById('modifyName').value,document.getElementById('modifyTel').value,
 			document.getElementById('modifyMail').value);">
-			
-			<span>6.打开联系人，多选</span>
-            <input class="btn" type="button" value="打开联系人，多选" onclick="uexContact.multiOpen();">
-            <span>选择的联系人信息为：</span>
-            <div class="tcxx" id="multidata"></div>
 
-			<span>7.VCard方式添加联系人：</span>
-                <span> 添加的联系人信息格式: BEGIN:VCARD\nVERSION:3.0\nN:韩;超\nTEL:22334752\nEMAIL:zhuliang@ceair.com\nADR:;;绥宁路628号;;上海;200335\nORG:中国东方航空股有限公司\nTITLE:项目经理\nURL:mp.ceair.com\nNOTE:名\347\211\214二维码\nEND:VCARD" id="VCcardInfo"</span>
-            <input class="btn" type="button" value="VCard添加联系人" onclick="uexContact.addItemWithVCard('BEGIN:VCARD\nVERSION:3.0\nN:韩;超\nTEL:22334752\nEMAIL:zhuliang@ceair.com\nADR:;;绥宁路628号;;上海;200335\nORG:中国东方航空股有限公司\nTITLE:项目经理\nURL:mp.ceair.com\nNOTE:名\347\211\214二维码\nEND:VCARD','');">
-			<br>
-		</div>
-	</div>
+        <span>6.打开联系人，多选</span>
+        <input class="btn" type="button" value="打开联系人，多选" onclick="uexContact.multiOpen();">
+        <span>选择的联系人信息为：</span>
+        <div class="tcxx" id="multidata"></div>
+
+        <span>7.VCard方式添加联系人：</span>
+        <span> 添加的联系人信息格式: BEGIN:VCARD\nVERSION:3.0\nN:韩;超\nTEL:22334752\nEMAIL:zhuliang@ceair.com\nADR:;;绥宁路628号;;上海;200335\nORG:中国东方航空股有限公司\nTITLE:项目经理\nURL:mp.ceair.com\nNOTE:名\347\211\214二维码\nEND:VCARD" id="VCcardInfo"</span>
+        <input class="btn" type="button" value="VCard添加联系人"
+               onclick="uexContact.addItemWithVCard('BEGIN:VCARD\nVERSION:3.0\nN:韩;超\nTEL:22334752\nEMAIL:zhuliang@ceair.com\nADR:;;绥宁路628号;;上海;200335\nORG:中国东方航空股有限公司\nTITLE:项目经理\nURL:mp.ceair.com\nNOTE:名\347\211\214二维码\nEND:VCARD','');">
+        <br>
+    </div>
+</div>
 </body>
 <script>
 

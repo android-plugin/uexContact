@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical">
 
     <!-- 头部选择部分 -->
 
@@ -10,7 +10,7 @@
         android:id="@+id/layout_relative"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/plugin_contacts_top_bg_shape" >
+        android:background="@drawable/plugin_contacts_top_bg_shape">
 
         <Button
             android:id="@+id/title_return"
@@ -23,15 +23,13 @@
             android:gravity="center"
             android:text="@string/back"
             android:textColor="@android:color/white"
-            android:textSize="14sp" 
-           />
+            android:textSize="14sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="@string/plugin_contact_linkman_all" 
-            />
+            android:text="@string/plugin_contact_linkman_all" />
 
         <Button
             android:id="@+id/title_prompt"
@@ -40,38 +38,36 @@
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_marginRight="12dip"
-           	android:background="@drawable/plugin_contacts_btn_multiselect_bg_selector"
+            android:background="@drawable/plugin_contacts_btn_multiselect_bg_selector"
             android:gravity="center"
             android:textColor="@android:color/white"
-            android:textSize="14sp" 
-            />
+            android:textSize="14sp" />
     </RelativeLayout>
 
-        <!-- 自动筛选联系人 -->
+    <!-- 自动筛选联系人 -->
     <AutoCompleteTextView
-            android:id="@+id/auto_edit"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-           	
-            android:completionThreshold="1"
-            android:focusableInTouchMode="true" />
+        android:id="@+id/auto_edit"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
 
-<!-- 中部 ListView -->
+        android:completionThreshold="1"
+        android:focusableInTouchMode="true" />
+
+    <!-- 中部 ListView -->
 
     <ListView
         android:id="@+id/plugin_contact_listview"
         android:layout_width="fill_parent"
-        android:layout_height="0dip" 
+        android:layout_height="0dip"
         android:layout_weight="1"
-        android:focusableInTouchMode="true">
-    </ListView>
+        android:focusableInTouchMode="true"></ListView>
 
     <LinearLayout
         android:id="@+id/select_group"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:visibility="gone" >
+        android:visibility="gone">
 
         <Button
             android:id="@+id/select_all"
@@ -81,8 +77,7 @@
             android:background="@drawable/plugin_contacts_button_selector"
             android:text="@string/select_all"
             android:textColor="@android:color/white"
-            android:textSize="14sp" 
-            />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/select_cancel"
@@ -92,8 +87,7 @@
             android:background="@drawable/plugin_contacts_button_selector"
             android:text="@string/cancel_select_all"
             android:textColor="@android:color/white"
-            android:textSize="14sp" 
-            />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/select_enter"
@@ -103,8 +97,7 @@
             android:background="@drawable/plugin_contacts_button_selector"
             android:text="@string/confirm"
             android:textColor="@android:color/white"
-            android:textSize="14sp" 
-            />
+            android:textSize="14sp" />
     </LinearLayout>
 
 </LinearLayout>

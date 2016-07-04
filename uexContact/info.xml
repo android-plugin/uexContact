@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uexplugins>
-    <plugin
-        uexName="uexContact" version="3.0.5" build="5">
+    <plugin uexName="uexContact" version="3.0.5" build="5">
         <info>5:addItem接口支持多个号码的添加,以分号分隔</info>
         <build>4:新增search,modifyWithId,deleteWithId接口以及对应回调.优化查询逻辑</build>
         <build>3:修复执行过慢影响UI线程的问题,修正当增删改查存在的部分回调错误问题</build>

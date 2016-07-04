@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="70dip"
     android:layout_height="80dip"
-    android:background="@drawable/platform_myspace_grid_item_bg_selector" >
+    android:background="@drawable/platform_myspace_grid_item_bg_selector">
 
     <ImageView
         android:id="@+id/platform_myspace_app_icon"

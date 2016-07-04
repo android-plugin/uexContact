@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="fill_parent">
 
     <RelativeLayout
         android:id="@+id/platform_myspace_top_layout"
         android:layout_width="fill_parent"
         android:layout_height="46dip"
         android:layout_alignParentTop="true"
-        android:background="@drawable/platform_myspace_top_bg_shape" >
+        android:background="@drawable/platform_myspace_top_bg_shape">
 
         <Button
             android:id="@+id/platform_myspace_top_btn_back"
@@ -47,21 +47,21 @@
         android:layout_below="@id/platform_myspace_top_layout"
         android:background="#f1f5f8"
         android:focusable="true"
-        android:orientation="vertical" >
+        android:orientation="vertical">
 
         <ScrollView
             android:id="@+id/platform_myspace_scroll_view"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:background="#f1f5f8"
-            android:focusable="true" >
+            android:focusable="true">
 
             <LinearLayout
                 android:id="@+id/platform_myspace_main_content"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="visible" >
+                android:visibility="visible">
 
                 <TextView
                     android:id="@+id/platform_myspace_tv_recommend_apps"

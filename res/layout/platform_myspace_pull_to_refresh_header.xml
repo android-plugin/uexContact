@@ -3,7 +3,7 @@
     android:id="@+id/pull_to_refresh_header"
     android:layout_width="fill_parent"
     android:layout_height="60dip"
-    android:background="#f1f5f8" >
+    android:background="#f1f5f8">
 
     <ProgressBar
         android:id="@+id/pull_to_refresh_progress"
