@@ -3,7 +3,8 @@
 
     <!-- plugin contacts use -->
     <style name="Style.plugin_contacts_item_checkbox" parent="@android:style/Widget.CompoundButton.CheckBox">
-        <item name="android:button">@drawable/plugin_contacts_cb_bg_selector</item>
+        <item name="android:button">@null</item>
+        <item name="android:background">@drawable/plugin_contacts_cb_bg_selector</item>
     </style>
-    
+
 </resources>
