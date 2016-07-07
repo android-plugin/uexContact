@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/plugin_contacts_filelist_item_bg_selector"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:paddingBottom="12dp"
+    android:paddingRight="12dp"
+    android:paddingTop="12dp">
 
     <ImageView
         android:id="@+id/img"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="5dip" />
+        android:layout_margin="5dip"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -20,39 +24,40 @@
             android:id="@+id/phone_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
-            android:textSize="17dip" />
+            android:textColor="#333333"
+            android:textSize="17dip"/>
 
         <TextView
             android:id="@+id/phone_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
-            android:textSize="14dip" />
+            android:textColor="#666666"
+            android:textSize="14dip"/>
 
         <TextView
             android:id="@+id/phone_email"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
-            android:textSize="14dip" />
+            android:textColor="#666666"
+            android:textSize="14dip"
+            android:visibility="gone"/>
     </LinearLayout>
 
     <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
         <CheckBox
             android:id="@+id/check_box"
             style="@style/Style.plugin_contacts_item_checkbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
             android:clickable="false"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:gravity="center_vertical"
-            android:visibility="gone" />
+            android:visibility="visible"/>
     </RelativeLayout>
 
 </LinearLayout>

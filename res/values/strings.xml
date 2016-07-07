@@ -109,4 +109,5 @@
     <string name="plugin_contact_modify_fail">修改失败</string>
     <string name="plugin_contact_linkman_all">全部联系人</string>
     <string name="plugin_contact_open_fail">打开通讯录失败!</string>
+    <string name="plugin_contact_multi_select">多选</string>
 </resources>
