@@ -383,7 +383,7 @@ public class EUExContact extends EUExBase {
     }
 
     public void deleteItem(String[] parm) {
-        if (parm == null || parm.length != 1)
+        if (parm == null || parm.length < 1)
             return;
         final String inName = parm[0];
         if(parm.length == 2) {
