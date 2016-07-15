@@ -680,16 +680,16 @@ public class EUExContact extends EUExBase {
                                                 && inNum != null && inEmail != null) {
                                             if (PFConcactMan.modify(mContext, inName,
                                                     inNum, inEmail)) {
-                                                if (modifyWithIdFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, true);
+                                                if (modifyItemFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, true);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                             EUExCallback.F_C_INT,
                                                             EUExCallback.F_C_SUCCESS);
                                                 }
                                             } else {
-                                                if (modifyWithIdFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, false);
+                                                if (modifyItemFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, false);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                             EUExCallback.F_C_INT,
@@ -697,8 +697,8 @@ public class EUExContact extends EUExBase {
                                                 }
                                             }
                                         } else {
-                                            if (modifyWithIdFuncId != null) {
-                                                callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, false);
+                                            if (modifyItemFuncId != null) {
+                                                callbackToJs(Integer.parseInt(modifyItemFuncId), false, false);
                                             } else {
                                                 jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                         EUExCallback.F_C_INT,
