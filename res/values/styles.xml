@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-	<style name="browser_main_theme" parent="@android:style/Theme.NoTitleBar">
+    <style name="browser_main_theme" parent="@android:style/Theme.NoTitleBar">
         <item name="android:scrollbarThumbHorizontal">@drawable/engine_scroller_thumb_hor</item>
         <item name="android:scrollbarThumbVertical">@drawable/engine_scroller_thumb_ver</item>
         <item name="android:windowBackground">@color/transparent</item>
@@ -79,7 +79,7 @@
         <item name="android:windowEnterAnimation">@anim/platform_myspace_fade_in_anim</item>
         <item name="android:windowExitAnimation">@anim/platform_myspace_fade_out_anim</item>
     </style>
-	
+
     <!-- uexConcact -->
     <style name="Style.plugin_contacts_item_checkbox" parent="@android:style/Widget.CompoundButton.CheckBox">
         <item name="android:button">@null</item>

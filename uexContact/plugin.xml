@@ -2,17 +2,17 @@
 <uexplugins>
     <!-- plugin Contact -->
     <plugin
-        className="org.zywx.wbpalmstar.plugin.uexcontacts.EUExContact"
-        uexName="uexContact" version="3.0" build="0">
-        <method name="open" />
-        <method name="multiOpen" />
-        <method name="addItem" />
-        <method name="deleteItem" />
-        <method name="searchItem" />
-        <method name="modifyItem" />
-        <method name="deleteWithId" />
-        <method name="search" />
-        <method name="modifyWithId" />
-        <method name="addItemWithVCard" />
+            className="org.zywx.wbpalmstar.plugin.uexcontacts.EUExContact"
+            uexName="uexContact" version="3.0" build="0">
+        <method name="open"/>
+        <method name="multiOpen"/>
+        <method name="addItem"/>
+        <method name="deleteItem"/>
+        <method name="searchItem"/>
+        <method name="modifyItem"/>
+        <method name="deleteWithId"/>
+        <method name="search"/>
+        <method name="modifyWithId"/>
+        <method name="addItemWithVCard"/>
     </plugin>
 </uexplugins>
