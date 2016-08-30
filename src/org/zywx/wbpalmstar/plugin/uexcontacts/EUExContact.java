@@ -36,6 +36,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.zywx.wbpalmstar.base.BDebug;
 import org.zywx.wbpalmstar.base.ResoureFinder;
 import org.zywx.wbpalmstar.engine.DataHelper;
 import org.zywx.wbpalmstar.engine.EBrowserView;
@@ -163,7 +164,7 @@ public class EUExContact extends EUExBase {
                             }
                         }
                         if (null != openFuncId) {
-                            callbackToJs(Integer.parseInt(openFuncId), false, jobj);
+                            callbackToJs(Integer.parseInt(openFuncId), false,0,jobj);
                         } else {
                             jsCallback(EUExContact.KEY_CONTACT_OPEN, 0,
                                     EUExCallback.F_C_JSON, jobj.toString());
@@ -175,6 +176,12 @@ public class EUExContact extends EUExBase {
                         return;
                     }
                 } else {
+                    if (null != openFuncId) {
+                        callbackToJs(Integer.parseInt(openFuncId), false,-1);
+                    } else {
+                        jsCallback(EUExContact.KEY_CONTACT_OPEN, 1,
+                                EUExCallback.F_C_JSON,null);
+                    }
                     return;
                 }
                 break;
@@ -185,13 +192,18 @@ public class EUExContact extends EUExBase {
                     if (multiOpenFuncId != null) {
                         try {
                             JSONArray array = new JSONArray(result);
-                            callbackToJs(Integer.parseInt(multiOpenFuncId), false, array);
+                            callbackToJs(Integer.parseInt(multiOpenFuncId), false,0, array);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     } else {
                         jsCallback(EUExContact.KEY_CONTACT_MULTIOPEN, 0,
                                 EUExCallback.F_C_JSON, result);
+                    }
+                }else{
+                    if (multiOpenFuncId != null) {
+                        callbackToJs(Integer.parseInt(multiOpenFuncId), false,-1);
+
                     }
                 }
                 break;
@@ -225,7 +237,7 @@ public class EUExContact extends EUExBase {
             startActivityForResult(intent, F_ACT_REQ_CODE_UEX_MULTI_CONTACT);
         } catch (Exception e) {
             if (multiOpenFuncId != null) {
-                callbackToJs(Integer.parseInt(multiOpenFuncId), false, EUExCallback.F_C_FAILED);
+                callbackToJs(Integer.parseInt(multiOpenFuncId), false,1);
             } else {
                 jsCallback(KEY_CONTACT_MULTIOPEN, 0, EUExCallback.F_C_INT,
                         EUExCallback.F_C_FAILED);
@@ -276,7 +288,14 @@ public class EUExContact extends EUExBase {
                                     }).start();
                                 }
                             })
-                    .setNegativeButton(finder.getStringId("cancel"), null)
+                    .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (addItemFuncId != null) {
+                                callbackToJs(Integer.parseInt(addItemFuncId), false, -1);
+                            }
+                        }
+                    })
                     .show();
         } else {
             new Thread(new Runnable() {
@@ -295,7 +314,7 @@ public class EUExContact extends EUExBase {
             if (PFConcactMan.add(mContext, inName,
                     inNum, inEmail)) {
                 if (addItemFuncId != null) {
-                    callbackToJs(Integer.parseInt(addItemFuncId), false, true);
+                    callbackToJs(Integer.parseInt(addItemFuncId), false, 0);
                 } else {
                     jsCallback(KEY_CONTACT_ADD, 0,
                             EUExCallback.F_C_INT,
@@ -303,7 +322,7 @@ public class EUExContact extends EUExBase {
                 }
             } else {
                 if (addItemFuncId != null) {
-                    callbackToJs(Integer.parseInt(addItemFuncId), false, false);
+                    callbackToJs(Integer.parseInt(addItemFuncId), false, 1);
                 } else {
                     jsCallback(KEY_CONTACT_ADD, 0,
                             EUExCallback.F_C_INT,
@@ -312,7 +331,7 @@ public class EUExContact extends EUExBase {
             }
         } else {
             if (addItemFuncId != null) {
-                callbackToJs(Integer.parseInt(addItemFuncId), false, false);
+                callbackToJs(Integer.parseInt(addItemFuncId), false, 1);
             } else {
                 jsCallback(KEY_CONTACT_ADD, 0,
                         EUExCallback.F_C_INT,
@@ -344,11 +363,14 @@ public class EUExContact extends EUExBase {
                                             deleteOptionVO = DataHelper.gson.fromJson(parm[0],
                                                     DeleteOptionVO.class);
                                         } catch (Exception e) {
+                                            if (BDebug.DEBUG){
+                                                e.printStackTrace();
+                                            }
                                         }
                                         if (deleteOptionVO != null) {
                                             if (PFConcactMan.deletesWithContactId(mContext, deleteOptionVO.getContactId())) {
                                                 if (deleteWithIdFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, true);
+                                                    callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, 0);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_DELETEWITHID, 0,
                                                             EUExCallback.F_C_INT,
@@ -356,7 +378,7 @@ public class EUExContact extends EUExBase {
                                                 }
                                             } else {
                                                 if (deleteWithIdFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, false);
+                                                    callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, 1);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_DELETEWITHID, 0,
                                                             EUExCallback.F_C_INT,
@@ -365,7 +387,7 @@ public class EUExContact extends EUExBase {
                                             }
                                         } else {
                                             if (deleteWithIdFuncId != null) {
-                                                callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, false);
+                                                callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_DELETEWITHID, 0,
                                                         EUExCallback.F_C_INT,
@@ -376,7 +398,14 @@ public class EUExContact extends EUExBase {
                                 }).start();
                             }
                         })
-                .setNegativeButton(finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (deleteWithIdFuncId != null) {
+                            callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
@@ -402,7 +431,7 @@ public class EUExContact extends EUExBase {
                                         if (inName != null && inName.length() > 0) {
                                             if (PFConcactMan.deletes(mContext, inName)) {
                                                 if (deleteItemFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(deleteItemFuncId), false, true);
+                                                    callbackToJs(Integer.parseInt(deleteItemFuncId), false, 0);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                             EUExCallback.F_C_INT,
@@ -410,7 +439,7 @@ public class EUExContact extends EUExBase {
                                                 }
                                             } else {
                                                 if (deleteItemFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(deleteItemFuncId), false, false);
+                                                    callbackToJs(Integer.parseInt(deleteItemFuncId), false, 1);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                             EUExCallback.F_C_INT,
@@ -419,7 +448,7 @@ public class EUExContact extends EUExBase {
                                             }
                                         } else {
                                             if (deleteItemFuncId != null) {
-                                                callbackToJs(Integer.parseInt(deleteItemFuncId), false, false);
+                                                callbackToJs(Integer.parseInt(deleteItemFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                         EUExCallback.F_C_INT,
@@ -430,7 +459,14 @@ public class EUExContact extends EUExBase {
                                 }).start();
                             }
                         })
-                .setNegativeButton(finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (deleteItemFuncId != null) {
+                            callbackToJs(Integer.parseInt(deleteItemFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
@@ -450,6 +486,9 @@ public class EUExContact extends EUExBase {
                     searchOptionVO = DataHelper.gson.fromJson(optionJson,
                             SearchOptionVO.class);
                 } catch (Exception e) {
+                    if (BDebug.DEBUG){
+                        e.printStackTrace();
+                    }
                 }
                 if (searchOptionVO == null) {
                     searchCallback(false, null);
@@ -533,14 +572,14 @@ public class EUExContact extends EUExBase {
                     if (outJsonObj != null) {
                         if (resultNum == -1) {
                             if (searchItemFuncId != null) {
-                                callbackToJs(Integer.parseInt(searchItemFuncId), false, outJsonObj);
+                                callbackToJs(Integer.parseInt(searchItemFuncId), false,0, outJsonObj);
                             } else {
                                 jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
                             }
                         } else {
                             if (outJsonObj.length() < resultNum) {//if lenght < resultNum
                                 if (searchItemFuncId != null) {
-                                    callbackToJs(Integer.parseInt(searchItemFuncId), false, outJsonObj);
+                                    callbackToJs(Integer.parseInt(searchItemFuncId), false,0, outJsonObj);
                                 } else {
                                     jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
                                 }
@@ -567,7 +606,7 @@ public class EUExContact extends EUExBase {
                                         }
                                     }
                                     if (searchItemFuncId != null) {
-                                        callbackToJs(Integer.parseInt(searchItemFuncId), false, jsonArray);
+                                        callbackToJs(Integer.parseInt(searchItemFuncId), false,0, jsonArray);
                                     } else {
                                         jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, jsonArray.toString());
                                     }
@@ -576,14 +615,14 @@ public class EUExContact extends EUExBase {
                         }
                     } else {
                         if (searchItemFuncId != null) {
-                            callbackToJs(Integer.parseInt(searchItemFuncId), false, false);
+                            callbackToJs(Integer.parseInt(searchItemFuncId), false, 1);
                         } else {
                             jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                         }
                     }
                 } else {
                     if (searchItemFuncId != null) {
-                        callbackToJs(Integer.parseInt(searchItemFuncId), false, false);
+                        callbackToJs(Integer.parseInt(searchItemFuncId), false, 1);
                     } else {
                         jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
                     }
@@ -615,11 +654,14 @@ public class EUExContact extends EUExBase {
                                             modifyOptionVO = DataHelper.gson.fromJson(parm[0],
                                                     ModifyOptionVO.class);
                                         } catch (Exception e) {
+                                            if (BDebug.DEBUG){
+                                                e.printStackTrace();
+                                            }
                                         }
                                         if (modifyOptionVO != null) {
                                             if (PFConcactMan.modify(mContext, modifyOptionVO)) {
                                                 if (modifyWithIdFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, true);
+                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, 0);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
                                                             EUExCallback.F_C_INT,
@@ -627,7 +669,7 @@ public class EUExContact extends EUExBase {
                                                 }
                                             } else {
                                                 if (modifyWithIdFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, false);
+                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, 1);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
                                                             EUExCallback.F_C_INT,
@@ -636,7 +678,7 @@ public class EUExContact extends EUExBase {
                                             }
                                         } else {
                                             if (modifyWithIdFuncId != null) {
-                                                callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, false);
+                                                callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
                                                         EUExCallback.F_C_INT,
@@ -647,7 +689,14 @@ public class EUExContact extends EUExBase {
                                 }).start();
                             }
                         })
-                .setNegativeButton(finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (modifyWithIdFuncId != null) {
+                            callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
@@ -679,7 +728,7 @@ public class EUExContact extends EUExBase {
                                             if (PFConcactMan.modify(mContext, inName,
                                                     inNum, inEmail)) {
                                                 if (modifyItemFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, true);
+                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, 0);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                             EUExCallback.F_C_INT,
@@ -687,7 +736,7 @@ public class EUExContact extends EUExBase {
                                                 }
                                             } else {
                                                 if (modifyItemFuncId != null) {
-                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, false);
+                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, 1);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                             EUExCallback.F_C_INT,
@@ -696,7 +745,7 @@ public class EUExContact extends EUExBase {
                                             }
                                         } else {
                                             if (modifyItemFuncId != null) {
-                                                callbackToJs(Integer.parseInt(modifyItemFuncId), false, false);
+                                                callbackToJs(Integer.parseInt(modifyItemFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                         EUExCallback.F_C_INT,
@@ -707,7 +756,14 @@ public class EUExContact extends EUExBase {
                                 }).start();
                             }
                         })
-                .setNegativeButton(finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (modifyItemFuncId != null) {
+                            callbackToJs(Integer.parseInt(modifyItemFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
@@ -752,7 +808,7 @@ public class EUExContact extends EUExBase {
                         if (PFConcactMan.add(mContext, contactMap,
                                 accountName, accountType)) {
                             if (null != addItemWithVCardFuncId) {
-                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, true);
+                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 0);
                             } else {
                                 jsCallback(KEY_CONTACT_ADD, 0,
                                         EUExCallback.F_C_INT,
@@ -760,7 +816,7 @@ public class EUExContact extends EUExBase {
                             }
                         } else {
                             if (null != addItemWithVCardFuncId) {
-                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, false);
+                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
                             } else {
                                 jsCallback(KEY_CONTACT_ADD, 0,
                                         EUExCallback.F_C_INT,
@@ -769,7 +825,7 @@ public class EUExContact extends EUExBase {
                         }
                     } catch (Exception e) {
                         if (null != addItemWithVCardFuncId) {
-                            callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, false);
+                            callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
                         } else {
                             jsCallback(KEY_CONTACT_ADD, 0,
                                     EUExCallback.F_C_INT,
@@ -820,7 +876,7 @@ public class EUExContact extends EUExBase {
                                                 if (PFConcactMan.add(mContext, contactMap,
                                                         accountName, accountType)) {
                                                     if (null != addItemWithVCardFuncId) {
-                                                        callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, true);
+                                                        callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 0);
                                                     } else {
                                                         jsCallback(KEY_CONTACT_ADD, 0,
                                                                 EUExCallback.F_C_INT,
@@ -828,7 +884,7 @@ public class EUExContact extends EUExBase {
                                                     }
                                                 } else {
                                                     if (null != addItemWithVCardFuncId) {
-                                                        callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, false);
+                                                        callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
                                                     } else {
                                                         jsCallback(KEY_CONTACT_ADD, 0,
                                                                 EUExCallback.F_C_INT,
@@ -837,7 +893,7 @@ public class EUExContact extends EUExBase {
                                                 }
                                             } catch (Exception e) {
                                                 if (null != addItemWithVCardFuncId) {
-                                                    callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, false);
+                                                    callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_ADD, 0,
                                                             EUExCallback.F_C_INT,
@@ -850,7 +906,14 @@ public class EUExContact extends EUExBase {
                                 }
 
                             })
-                    .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                    .setNegativeButton(/* "否" */finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (null != addItemWithVCardFuncId) {
+                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, -1);
+                            }
+                        }
+                    })
                     .show();
         }
     }
@@ -880,16 +943,16 @@ public class EUExContact extends EUExBase {
     }
 
     private void searchCallback(boolean isSuccess, JSONArray inData) {
-        JSONObject jsonCallback = new JSONObject();
-        try {
-            jsonCallback.put(EUExCallback.F_JK_RESULT,
-                    isSuccess ? EUExCallback.F_C_SUCCESS : EUExCallback.F_C_FAILED);
-            jsonCallback.put(JK_KEY_CONTACT_LIST, inData == null ? new JSONArray() : inData);
-        } catch (Exception e) {
-        }
         if (searchFuncId != null) {
-            callbackToJs(Integer.parseInt(searchFuncId), false, jsonCallback);
+            callbackToJs(Integer.parseInt(searchFuncId), false,isSuccess?0:1,inData);
         } else {
+            JSONObject jsonCallback = new JSONObject();
+            try {
+                jsonCallback.put(EUExCallback.F_JK_RESULT,
+                        isSuccess ? EUExCallback.F_C_SUCCESS : EUExCallback.F_C_FAILED);
+                jsonCallback.put(JK_KEY_CONTACT_LIST, inData == null ? new JSONArray() : inData);
+            } catch (Exception e) {
+            }
             jsJsonCallback(KEY_CONTACT_SEARCH, jsonCallback.toString());
         }
     }

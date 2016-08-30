@@ -41,6 +41,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.zywx.wbpalmstar.base.BDebug;
 import org.zywx.wbpalmstar.base.ResoureFinder;
 import org.zywx.wbpalmstar.engine.universalex.EUExCallback;
 import org.zywx.wbpalmstar.plugin.uexcontacts.vo.ModifyOptionVO;
@@ -804,10 +805,16 @@ public class PFConcactMan {
                     if (cusor != null)
                         cusor.close();
                 } catch (Exception e) {
+                    if (BDebug.DEBUG){
+                        e.printStackTrace();
+                    }
                     ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
                     return false;
                 }
             } catch (Exception e) {
+                if (BDebug.DEBUG){
+                    e.printStackTrace();
+                }
                 ToastShow(context, finder.getString(context, "plugin_contact_modify_fail"));
             }
         }
