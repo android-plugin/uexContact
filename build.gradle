@@ -4,28 +4,36 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.1.2'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
     }
 }
 
 apply plugin: 'com.android.application'
 
+
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
+    compile 'org.appcan:engine:+:systemRelease@aar'
 }
 
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+    maven {
+        url 'https://raw.githubusercontent.com/android-plugin/mvn-repo/master/'
+    }
+}
+
+
 android {
+    compileSdkVersion 22
+    buildToolsVersion "23.0.2"
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
-    lintOptions {
-        abortOnError false
-    }
-    compileSdkVersion 23
-    buildToolsVersion "23.0.0"
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -50,16 +58,5 @@ android {
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')
     }
-    defaultConfig {
-        applicationId 'org.zywx.wbpalmstar.widgetone.uexcontact'
-        minSdkVersion 14
-    }
-    productFlavors {
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_6
-        targetCompatibility JavaVersion.VERSION_1_6
-    }
 }
-
 apply from: "https://raw.githubusercontent.com/android-plugin/gradle-plugin/master/buildPlugin.gradle"

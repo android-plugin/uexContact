@@ -5,16 +5,8 @@ import android.net.Uri;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 
-import org.json.JSONObject;
-
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,6 +32,7 @@ public class ContactVO implements Serializable {
         Uri uri = photoUri != null ? Uri.parse(photoUri) : null;
         return new ContactVO(id, lookupKey, displayName, firstName, lastName, uri);
     }
+
     final private long mId;
     private String mDisplayName;
 
@@ -67,8 +60,8 @@ public class ContactVO implements Serializable {
         mSort = sort;
     }
 
-    private  boolean mIsSelect = false;
-    private  String mSort;
+    private boolean mIsSelect = false;
+    private String mSort;
     private char mContactLetterBadge;
     private char mContactLetterScroll;
 
@@ -77,10 +70,11 @@ public class ContactVO implements Serializable {
         mDisplayName = TextUtils.isEmpty(displayName) ? "---" : displayName;
 
         mLookupKey = lookupKey;
-        mFirstName =TextUtils.isEmpty(firstName) ? "---" : firstName;
+        mFirstName = TextUtils.isEmpty(firstName) ? "---" : firstName;
         mLastName = TextUtils.isEmpty(lastName) ? "---" : lastName;
         mPhotoUri = photoUri;
     }
+
     public String getFirstName() {
         return mFirstName;
     }
@@ -120,7 +114,7 @@ public class ContactVO implements Serializable {
     /**
      * Matches:
      * https://developer.android.com/reference/android/provider/ContactsContract.ContactsColumns.html#LOOKUP_KEY
-     *
+     * <p>
      * Used as unique key to cache contact pictures for a specific contact and also to create the
      * contact Uri: ContactsContract.Contacts.CONTENT_LOOKUP_URI + "/" + LOOKUP_KEY
      */
@@ -145,15 +139,15 @@ public class ContactVO implements Serializable {
     }
 
     public void setEmail(int type, String value) {
-        if (mEmail==null){
-            mEmail=new ArrayList<String>();
+        if (mEmail == null) {
+            mEmail = new ArrayList<String>();
         }
         mEmail.add(value);
     }
 
     public void setPhone(int type, String value) {
-        if (mPhone==null){
-            mPhone=new ArrayList<String>();
+        if (mPhone == null) {
+            mPhone = new ArrayList<String>();
         }
         mPhone.add(value);
     }
@@ -170,9 +164,6 @@ public class ContactVO implements Serializable {
     public String toString() {
         return super.toString() + ", " + mFirstName + " " + mLastName + ", " + mEmail;
     }
-
-
-
 
 
 }

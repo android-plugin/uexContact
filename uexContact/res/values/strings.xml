@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
-    <!-- uexConcact -->
+    <!-- concact use string -->
     <string name="plugin_contact_add_prompt">是否添加联系人</string>
     <string name="plugin_contact_delete_prompt">是否删除联系人</string>
     <string name="plugin_contact_modify_prompt">是否修改联系人</string>

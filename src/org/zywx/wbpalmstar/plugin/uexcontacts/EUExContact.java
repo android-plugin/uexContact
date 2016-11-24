@@ -18,6 +18,10 @@
 
 package org.zywx.wbpalmstar.plugin.uexcontacts;
 
+import a_vcard.android.syncml.pim.PropertyNode;
+import a_vcard.android.syncml.pim.VDataBuilder;
+import a_vcard.android.syncml.pim.VNode;
+import a_vcard.android.syncml.pim.vcard.VCardParser;
 import android.accounts.AuthenticatorDescription;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -29,10 +33,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.zywx.wbpalmstar.base.BDebug;
 import org.zywx.wbpalmstar.base.ResoureFinder;
 import org.zywx.wbpalmstar.engine.DataHelper;
 import org.zywx.wbpalmstar.engine.EBrowserView;
@@ -47,11 +51,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import a_vcard.android.syncml.pim.PropertyNode;
-import a_vcard.android.syncml.pim.VDataBuilder;
-import a_vcard.android.syncml.pim.VNode;
-import a_vcard.android.syncml.pim.vcard.VCardParser;
 
 public class EUExContact extends EUExBase {
     public static final String tag = "uexContact_";
@@ -72,6 +71,18 @@ public class EUExContact extends EUExBase {
     public static final int F_ACT_REQ_CODE_UEX_MULTI_CONTACT = 9;
     private ResoureFinder finder = null;
     private Object accountType, accountName;
+
+    private String openFuncId = null;
+    private String multiOpenFuncId = null;
+    private String addItemFuncId = null;
+    private String deleteWithIdFuncId = null;
+    private String deleteItemFuncId = null;
+    private String searchFuncId = null;
+    private String searchItemFuncId = null;
+    private String modifyWithIdFuncId = null;
+    private String modifyItemFuncId = null;
+    private String addItemWithVCardFuncId = null;
+
 
     public EUExContact(Context context, EBrowserView inParent) {
         super(context, inParent);
@@ -118,11 +129,14 @@ public class EUExContact extends EUExBase {
                                             android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID
                                                     + " = " + contactId, null, null);
                             if (phones != null && phones.getCount() > 0) {
-                                phones.moveToFirst();
-                                String phoneNumber = phones
-                                        .getString(phones
-                                                .getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
-                                jobj.put(EUExCallback.F_JK_NUM, phoneNumber);
+                                JSONArray jsonArray = new JSONArray();
+                                while (phones.moveToNext()) {
+                                    String phoneNumber = phones
+                                            .getString(phones
+                                                    .getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
+                                    jsonArray.put(phoneNumber);
+                                }
+                                jobj.put(EUExCallback.F_JK_NUM, jsonArray);
                                 if (phones.isClosed()) {
                                     Log.i("tag", "phones.close()");
                                     phones.close();
@@ -149,8 +163,12 @@ public class EUExContact extends EUExBase {
                                 c.close();
                             }
                         }
-                        jsCallback(EUExContact.KEY_CONTACT_OPEN, 0,
-                                EUExCallback.F_C_JSON, jobj.toString());
+                        if (null != openFuncId) {
+                            callbackToJs(Integer.parseInt(openFuncId), false,0,jobj);
+                        } else {
+                            jsCallback(EUExContact.KEY_CONTACT_OPEN, 0,
+                                    EUExCallback.F_C_JSON, jobj.toString());
+                        }
                     } catch (Exception e) {
                         Toast.makeText(mContext,
                                 finder.getString("plugin_contact_open_fail"),
@@ -158,6 +176,12 @@ public class EUExContact extends EUExBase {
                         return;
                     }
                 } else {
+                    if (null != openFuncId) {
+                        callbackToJs(Integer.parseInt(openFuncId), false,-1);
+                    } else {
+                        jsCallback(EUExContact.KEY_CONTACT_OPEN, 1,
+                                EUExCallback.F_C_JSON,null);
+                    }
                     return;
                 }
                 break;
@@ -165,10 +189,22 @@ public class EUExContact extends EUExBase {
                 if (resultCode == Activity.RESULT_OK) {
                     String result = data
                             .getStringExtra(ContactActivity.F_INTENT_KEY_RETURN_SELECT_LIST);
-                    jsCallback(EUExContact.KEY_CONTACT_MULTIOPEN, 0,
-                            EUExCallback.F_C_JSON, /*
-                                                 * jobj . toString ( )
-                                                 */result);
+                    if (multiOpenFuncId != null) {
+                        try {
+                            JSONArray array = new JSONArray(result);
+                            callbackToJs(Integer.parseInt(multiOpenFuncId), false,0, array);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        jsCallback(EUExContact.KEY_CONTACT_MULTIOPEN, 0,
+                                EUExCallback.F_C_JSON, result);
+                    }
+                }else{
+                    if (multiOpenFuncId != null) {
+                        callbackToJs(Integer.parseInt(multiOpenFuncId), false,-1);
+
+                    }
                 }
                 break;
         }
@@ -176,6 +212,9 @@ public class EUExContact extends EUExBase {
     }
 
     public void open(String[] parm) {
+        if (parm != null && parm.length == 1) {
+            openFuncId = parm[0];
+        }
         Intent intent = new Intent();
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
@@ -189,13 +228,20 @@ public class EUExContact extends EUExBase {
     }
 
     public void multiOpen(String[] parm) {
+        if (parm != null && parm.length == 1) {
+            multiOpenFuncId = parm[0];
+        }
         try {
             Intent intent = new Intent();
             intent.setClass(mContext, ContactActivity.class);
             startActivityForResult(intent, F_ACT_REQ_CODE_UEX_MULTI_CONTACT);
         } catch (Exception e) {
-            jsCallback(KEY_CONTACT_MULTIOPEN, 0, EUExCallback.F_C_INT,
-                    EUExCallback.F_C_FAILED);
+            if (multiOpenFuncId != null) {
+                callbackToJs(Integer.parseInt(multiOpenFuncId), false,1);
+            } else {
+                jsCallback(KEY_CONTACT_MULTIOPEN, 0, EUExCallback.F_C_INT,
+                        EUExCallback.F_C_FAILED);
+            }
         }
     }
 
@@ -206,26 +252,35 @@ public class EUExContact extends EUExBase {
         final String inNum = parm[1];
         final String inEmail = parm[2];
         boolean isNeedAlertDialog = true;
-        if (parm.length > 3) {
+        if (parm.length == 4) {
+            try {
+                int temp = Integer.parseInt(parm[3]);
+                addItemFuncId = parm[3];
+            } catch (NumberFormatException e) { //如果报错了，那么第4个参数一定是业务参数
+                String optionJson = parm[3];
+                AddOptionVO dataVO = DataHelper.gson.fromJson(optionJson, AddOptionVO.class);
+                if (dataVO != null) {
+                    isNeedAlertDialog = dataVO.isNeedAlertDialog();
+                }
+            }
+        } else if (parm.length == 5) {
             String optionJson = parm[3];
-            AddOptionVO dataVO = DataHelper.gson.fromJson(optionJson,
-                    AddOptionVO.class);
+            AddOptionVO dataVO = DataHelper.gson.fromJson(optionJson, AddOptionVO.class);
             if (dataVO != null) {
                 isNeedAlertDialog = dataVO.isNeedAlertDialog();
             }
+            addItemFuncId = parm[4];
         }
         if (isNeedAlertDialog) {
             new AlertDialog.Builder(mContext)
-                    .setTitle(/* "提示" */finder.getStringId("prompt"))
-                    .setMessage(
-                /* "是否添加联系人" */finder.getStringId("plugin_contact_add_prompt"))
-                    .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                    .setTitle(finder.getStringId("prompt"))
+                    .setMessage(finder.getStringId("plugin_contact_add_prompt"))
+                    .setPositiveButton(finder.getStringId("confirm"),
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
                                     new Thread(new Runnable() {
-
                                         @Override
                                         public void run() {
                                             addContact(inName, inNum, inEmail);
@@ -233,7 +288,14 @@ public class EUExContact extends EUExBase {
                                     }).start();
                                 }
                             })
-                    .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                    .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (addItemFuncId != null) {
+                                callbackToJs(Integer.parseInt(addItemFuncId), false, -1);
+                            }
+                        }
+                    })
                     .show();
         } else {
             new Thread(new Runnable() {
@@ -244,7 +306,6 @@ public class EUExContact extends EUExBase {
                 }
             }).start();
         }
-
     }
 
     private void addContact(String inName, String inNum, String inEmail) {
@@ -252,30 +313,43 @@ public class EUExContact extends EUExBase {
                 && inNum != null && inEmail != null) {
             if (PFConcactMan.add(mContext, inName,
                     inNum, inEmail)) {
-                jsCallback(KEY_CONTACT_ADD, 0,
-                        EUExCallback.F_C_INT,
-                        EUExCallback.F_C_SUCCESS);
+                if (addItemFuncId != null) {
+                    callbackToJs(Integer.parseInt(addItemFuncId), false, 0);
+                } else {
+                    jsCallback(KEY_CONTACT_ADD, 0,
+                            EUExCallback.F_C_INT,
+                            EUExCallback.F_C_SUCCESS);
+                }
+            } else {
+                if (addItemFuncId != null) {
+                    callbackToJs(Integer.parseInt(addItemFuncId), false, 1);
+                } else {
+                    jsCallback(KEY_CONTACT_ADD, 0,
+                            EUExCallback.F_C_INT,
+                            EUExCallback.F_C_FAILED);
+                }
+            }
+        } else {
+            if (addItemFuncId != null) {
+                callbackToJs(Integer.parseInt(addItemFuncId), false, 1);
             } else {
                 jsCallback(KEY_CONTACT_ADD, 0,
                         EUExCallback.F_C_INT,
                         EUExCallback.F_C_FAILED);
             }
-        } else {
-            jsCallback(KEY_CONTACT_ADD, 0,
-                    EUExCallback.F_C_INT,
-                    EUExCallback.F_C_FAILED);
         }
     }
 
     public void deleteWithId(final String[] parm) {
-        if (parm == null || parm.length != 1)
+        if (parm == null || parm.length < 1)
             return;
+        if (parm.length == 2) {
+            deleteWithIdFuncId = parm[1];
+        }
         new AlertDialog.Builder(mContext)
-                .setTitle(/* "提示" */finder.getStringId("prompt"))
-                .setMessage(
-                /* "是否删除联系人" */finder
-                                .getStringId("plugin_contact_delete_prompt"))
-                .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                .setTitle(finder.getStringId("prompt"))
+                .setMessage(finder.getStringId("plugin_contact_delete_prompt"))
+                .setPositiveButton(finder.getStringId("confirm"),
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog,
@@ -289,40 +363,63 @@ public class EUExContact extends EUExBase {
                                             deleteOptionVO = DataHelper.gson.fromJson(parm[0],
                                                     DeleteOptionVO.class);
                                         } catch (Exception e) {
+                                            if (BDebug.DEBUG){
+                                                e.printStackTrace();
+                                            }
                                         }
                                         if (deleteOptionVO != null) {
                                             if (PFConcactMan.deletesWithContactId(mContext, deleteOptionVO.getContactId())) {
-                                                jsCallback(KEY_CONTACT_DELETEWITHID, 0,
-                                                        EUExCallback.F_C_INT,
-                                                        EUExCallback.F_C_SUCCESS);
+                                                if (deleteWithIdFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, 0);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_DELETEWITHID, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_SUCCESS);
+                                                }
+                                            } else {
+                                                if (deleteWithIdFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, 1);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_DELETEWITHID, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_FAILED);
+                                                }
+                                            }
+                                        } else {
+                                            if (deleteWithIdFuncId != null) {
+                                                callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_DELETEWITHID, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_FAILED);
                                             }
-                                        } else {
-                                            jsCallback(KEY_CONTACT_DELETEWITHID, 0,
-                                                    EUExCallback.F_C_INT,
-                                                    EUExCallback.F_C_FAILED);
                                         }
                                     }
                                 }).start();
                             }
                         })
-                .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (deleteWithIdFuncId != null) {
+                            callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
     public void deleteItem(String[] parm) {
-        if (parm == null || parm.length != 1)
+        if (parm == null || parm.length < 1)
             return;
         final String inName = parm[0];
+        if (parm.length == 2) {
+            deleteItemFuncId = parm[1];
+        }
         new AlertDialog.Builder(mContext)
-                .setTitle(/* "提示" */finder.getStringId("prompt"))
-                .setMessage(
-                        /* "是否删除联系人" */finder
-                                .getStringId("plugin_contact_delete_prompt"))
-                .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                .setTitle(finder.getStringId("prompt"))
+                .setMessage(finder.getStringId("plugin_contact_delete_prompt"))
+                .setPositiveButton(finder.getStringId("confirm"),
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog,
@@ -333,30 +430,52 @@ public class EUExContact extends EUExBase {
                                     public void run() {
                                         if (inName != null && inName.length() > 0) {
                                             if (PFConcactMan.deletes(mContext, inName)) {
-                                                jsCallback(KEY_CONTACT_DELETEITEM, 0,
-                                                        EUExCallback.F_C_INT,
-                                                        EUExCallback.F_C_SUCCESS);
+                                                if (deleteItemFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(deleteItemFuncId), false, 0);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_DELETEITEM, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_SUCCESS);
+                                                }
+                                            } else {
+                                                if (deleteItemFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(deleteItemFuncId), false, 1);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_DELETEITEM, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_FAILED);
+                                                }
+                                            }
+                                        } else {
+                                            if (deleteItemFuncId != null) {
+                                                callbackToJs(Integer.parseInt(deleteItemFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_FAILED);
                                             }
-                                        } else {
-                                            jsCallback(KEY_CONTACT_DELETEITEM, 0,
-                                                    EUExCallback.F_C_INT,
-                                                    EUExCallback.F_C_FAILED);
                                         }
                                     }
                                 }).start();
                             }
                         })
-                .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (deleteItemFuncId != null) {
+                            callbackToJs(Integer.parseInt(deleteItemFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
     public void search(final String[] parm) {
         if (parm == null || parm.length < 1)
             return;
+        if (parm.length == 2) {
+            searchFuncId = parm[1];
+        }
         new Thread(new Runnable() {
 
             @Override
@@ -367,6 +486,9 @@ public class EUExContact extends EUExBase {
                     searchOptionVO = DataHelper.gson.fromJson(optionJson,
                             SearchOptionVO.class);
                 } catch (Exception e) {
+                    if (BDebug.DEBUG){
+                        e.printStackTrace();
+                    }
                 }
                 if (searchOptionVO == null) {
                     searchCallback(false, null);
@@ -420,14 +542,12 @@ public class EUExContact extends EUExBase {
                 String inName = parm[0];
                 int resultNum = 50;
                 SearchOptionVO searchOptionVO = new SearchOptionVO();
-                /*try {
-		        	searchOptionVO = DataHelper.gson.fromJson(inName,
-							SearchOptionVO.class);
-		        	inName = searchOptionVO.getSearchName();
-				} catch (Exception e) {
-				}*/
-                try {
-                    if (parm.length > 1) {
+
+                if (parm.length == 2) {
+                    try {
+                        int temp = Integer.parseInt(parm[1]); //如果是fuction
+                        searchItemFuncId = parm[1];
+                    } catch (NumberFormatException e) {
                         String optionJson = parm[1];
                         searchOptionVO = DataHelper.gson.fromJson(optionJson,
                                 SearchOptionVO.class);
@@ -435,17 +555,34 @@ public class EUExContact extends EUExBase {
                             resultNum = searchOptionVO.getResultNum();
                         }
                     }
-                } catch (Exception e) {
                 }
+                if (parm.length == 3) {
+                    String optionJson = parm[1];
+                    searchOptionVO = DataHelper.gson.fromJson(optionJson,
+                            SearchOptionVO.class);
+                    if (searchOptionVO != null) {
+                        resultNum = searchOptionVO.getResultNum();
+                    }
+                    searchItemFuncId = parm[2];
+                }
+
                 searchOptionVO.setSearchName(inName);
                 if (inName != null && inName.length() >= 0) {
                     JSONArray outJsonObj = PFConcactMan.search(mContext, searchOptionVO);
                     if (outJsonObj != null) {
                         if (resultNum == -1) {
-                            jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
+                            if (searchItemFuncId != null) {
+                                callbackToJs(Integer.parseInt(searchItemFuncId), false,0, outJsonObj);
+                            } else {
+                                jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
+                            }
                         } else {
                             if (outJsonObj.length() < resultNum) {//if lenght < resultNum
-                                jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
+                                if (searchItemFuncId != null) {
+                                    callbackToJs(Integer.parseInt(searchItemFuncId), false,0, outJsonObj);
+                                } else {
+                                    jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, outJsonObj.toString());
+                                }
                             } else {//if length >resultNum
                                 int size = outJsonObj.length() / resultNum + 1;
                                 int index = 0;
@@ -468,28 +605,41 @@ public class EUExContact extends EUExBase {
                                             }
                                         }
                                     }
-                                    jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, jsonArray.toString());
+                                    if (searchItemFuncId != null) {
+                                        callbackToJs(Integer.parseInt(searchItemFuncId), false,0, jsonArray);
+                                    } else {
+                                        jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_JSON, jsonArray.toString());
+                                    }
                                 }
                             }
                         }
                     } else {
-                        jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                        if (searchItemFuncId != null) {
+                            callbackToJs(Integer.parseInt(searchItemFuncId), false, 1);
+                        } else {
+                            jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                        }
                     }
                 } else {
-                    jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                    if (searchItemFuncId != null) {
+                        callbackToJs(Integer.parseInt(searchItemFuncId), false, 1);
+                    } else {
+                        jsCallback(KEY_CONTACT_SEARCHITEM, 0, EUExCallback.F_C_INT, EUExCallback.F_C_FAILED);
+                    }
                 }
             }
         }).start();
     }
 
     public void modifyWithId(final String[] parm) {
-        if (parm == null || parm.length != 1)
+        if (parm == null || parm.length < 1)
             return;
+        if (parm.length == 2) {
+            modifyWithIdFuncId = parm[1];
+        }
         new AlertDialog.Builder(mContext)
-                .setTitle(/* "提示" */finder.getStringId("prompt"))
-                .setMessage(
-                        /* "是否修改联系人" */finder
-                                .getStringId("plugin_contact_modify_prompt"))
+                .setTitle(finder.getStringId("prompt"))
+                .setMessage(finder.getStringId("plugin_contact_modify_prompt"))
                 .setPositiveButton(/* "是" */finder.getStringId("confirm"),
                         new DialogInterface.OnClickListener() {
                             @Override
@@ -504,43 +654,67 @@ public class EUExContact extends EUExBase {
                                             modifyOptionVO = DataHelper.gson.fromJson(parm[0],
                                                     ModifyOptionVO.class);
                                         } catch (Exception e) {
+                                            if (BDebug.DEBUG){
+                                                e.printStackTrace();
+                                            }
                                         }
                                         if (modifyOptionVO != null) {
                                             if (PFConcactMan.modify(mContext, modifyOptionVO)) {
-                                                jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
-                                                        EUExCallback.F_C_INT,
-                                                        EUExCallback.F_C_SUCCESS);
+                                                if (modifyWithIdFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, 0);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_SUCCESS);
+                                                }
+                                            } else {
+                                                if (modifyWithIdFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, 1);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_FAILED);
+                                                }
+                                            }
+                                        } else {
+                                            if (modifyWithIdFuncId != null) {
+                                                callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_FAILED);
                                             }
-                                        } else {
-                                            jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
-                                                    EUExCallback.F_C_INT,
-                                                    EUExCallback.F_C_FAILED);
                                         }
                                     }
                                 }).start();
                             }
                         })
-                .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (modifyWithIdFuncId != null) {
+                            callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
 
     public void modifyItem(String[] parm) {
-        if (parm == null || parm.length != 3)
+        if (parm == null || parm.length < 3)
             return;
         final String inName = parm[0];
         final String inNum = parm[1];
         final String inEmail = parm[2];
+
+        if (parm.length == 4) {
+            modifyItemFuncId = parm[3];
+        }
         new AlertDialog.Builder(mContext)
-                .setTitle(/* "提示" */finder.getStringId("prompt"))
-                .setMessage(
-                        /* "是否修改联系人" */finder
-                                .getStringId("plugin_contact_modify_prompt"))
-                .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                .setTitle(finder.getStringId("prompt"))
+                .setMessage(finder.getStringId("plugin_contact_modify_prompt"))
+                .setPositiveButton(finder.getStringId("confirm"),
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog,
@@ -553,24 +727,43 @@ public class EUExContact extends EUExBase {
                                                 && inNum != null && inEmail != null) {
                                             if (PFConcactMan.modify(mContext, inName,
                                                     inNum, inEmail)) {
-                                                jsCallback(KEY_CONTACT_MODIFYITEM, 0,
-                                                        EUExCallback.F_C_INT,
-                                                        EUExCallback.F_C_SUCCESS);
+                                                if (modifyItemFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, 0);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_MODIFYITEM, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_SUCCESS);
+                                                }
+                                            } else {
+                                                if (modifyItemFuncId != null) {
+                                                    callbackToJs(Integer.parseInt(modifyItemFuncId), false, 1);
+                                                } else {
+                                                    jsCallback(KEY_CONTACT_MODIFYITEM, 0,
+                                                            EUExCallback.F_C_INT,
+                                                            EUExCallback.F_C_FAILED);
+                                                }
+                                            }
+                                        } else {
+                                            if (modifyItemFuncId != null) {
+                                                callbackToJs(Integer.parseInt(modifyItemFuncId), false, 1);
                                             } else {
                                                 jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_FAILED);
                                             }
-                                        } else {
-                                            jsCallback(KEY_CONTACT_MODIFYITEM, 0,
-                                                    EUExCallback.F_C_INT,
-                                                    EUExCallback.F_C_FAILED);
                                         }
                                     }
                                 }).start();
                             }
                         })
-                .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                .setNegativeButton(finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (modifyItemFuncId != null) {
+                            callbackToJs(Integer.parseInt(modifyItemFuncId), false, -1);
+                        }
+                    }
+                })
                 .show();
     }
 
@@ -578,7 +771,12 @@ public class EUExContact extends EUExBase {
             "TITLE", "URL", "NOTE"};
 
     public void addItemWithVCard(final String[] parm) {
-        if (parm.length == 2 && "1".equals(parm[1])) {
+        if (parm == null || parm.length < 2)
+            return;
+        if (parm.length == 3) {
+            addItemWithVCardFuncId = parm[2];
+        }
+        if ("1".equals(parm[1])) {
             new Thread(new Runnable() {
 
                 @Override
@@ -609,18 +807,30 @@ public class EUExContact extends EUExBase {
                         }
                         if (PFConcactMan.add(mContext, contactMap,
                                 accountName, accountType)) {
-                            jsCallback(KEY_CONTACT_ADD, 0,
-                                    EUExCallback.F_C_INT,
-                                    EUExCallback.F_C_SUCCESS);
+                            if (null != addItemWithVCardFuncId) {
+                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 0);
+                            } else {
+                                jsCallback(KEY_CONTACT_ADD, 0,
+                                        EUExCallback.F_C_INT,
+                                        EUExCallback.F_C_SUCCESS);
+                            }
+                        } else {
+                            if (null != addItemWithVCardFuncId) {
+                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
+                            } else {
+                                jsCallback(KEY_CONTACT_ADD, 0,
+                                        EUExCallback.F_C_INT,
+                                        EUExCallback.F_C_FAILED);
+                            }
+                        }
+                    } catch (Exception e) {
+                        if (null != addItemWithVCardFuncId) {
+                            callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
                         } else {
                             jsCallback(KEY_CONTACT_ADD, 0,
                                     EUExCallback.F_C_INT,
                                     EUExCallback.F_C_FAILED);
                         }
-                    } catch (Exception e) {
-                        jsCallback(KEY_CONTACT_ADD, 0,
-                                EUExCallback.F_C_INT,
-                                EUExCallback.F_C_FAILED);
                         e.printStackTrace();
                     }
                     return;
@@ -628,10 +838,9 @@ public class EUExContact extends EUExBase {
             }).start();
         } else {
             new AlertDialog.Builder(mContext)
-                    .setTitle(/* "提示" */finder.getStringId("prompt"))
-                    .setMessage(
-            /* "是否添加联系人" */finder.getStringId("plugin_contact_add_prompt"))
-                    .setPositiveButton(/* "是" */finder.getStringId("confirm"),
+                    .setTitle(finder.getStringId("prompt"))
+                    .setMessage(finder.getStringId("plugin_contact_add_prompt"))
+                    .setPositiveButton(finder.getStringId("confirm"),
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog,
@@ -666,19 +875,30 @@ public class EUExContact extends EUExBase {
                                                 }
                                                 if (PFConcactMan.add(mContext, contactMap,
                                                         accountName, accountType)) {
-                                                    jsCallback(KEY_CONTACT_ADD, 0,
-                                                            EUExCallback.F_C_INT,
-                                                            EUExCallback.F_C_SUCCESS);
+                                                    if (null != addItemWithVCardFuncId) {
+                                                        callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 0);
+                                                    } else {
+                                                        jsCallback(KEY_CONTACT_ADD, 0,
+                                                                EUExCallback.F_C_INT,
+                                                                EUExCallback.F_C_SUCCESS);
+                                                    }
+                                                } else {
+                                                    if (null != addItemWithVCardFuncId) {
+                                                        callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
+                                                    } else {
+                                                        jsCallback(KEY_CONTACT_ADD, 0,
+                                                                EUExCallback.F_C_INT,
+                                                                EUExCallback.F_C_FAILED);
+                                                    }
+                                                }
+                                            } catch (Exception e) {
+                                                if (null != addItemWithVCardFuncId) {
+                                                    callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, 1);
                                                 } else {
                                                     jsCallback(KEY_CONTACT_ADD, 0,
                                                             EUExCallback.F_C_INT,
                                                             EUExCallback.F_C_FAILED);
                                                 }
-                                            } catch (Exception e) {
-                                                // TODO Auto-generated catch block
-                                                jsCallback(KEY_CONTACT_ADD, 0,
-                                                        EUExCallback.F_C_INT,
-                                                        EUExCallback.F_C_FAILED);
                                                 e.printStackTrace();
                                             }
                                         }
@@ -686,7 +906,14 @@ public class EUExContact extends EUExBase {
                                 }
 
                             })
-                    .setNegativeButton(/* "否" */finder.getStringId("cancel"), null)
+                    .setNegativeButton(/* "否" */finder.getStringId("cancel"), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (null != addItemWithVCardFuncId) {
+                                callbackToJs(Integer.parseInt(addItemWithVCardFuncId), false, -1);
+                            }
+                        }
+                    })
                     .show();
         }
     }
@@ -716,14 +943,18 @@ public class EUExContact extends EUExBase {
     }
 
     private void searchCallback(boolean isSuccess, JSONArray inData) {
-        JSONObject jsonCallback = new JSONObject();
-        try {
-            jsonCallback.put(EUExCallback.F_JK_RESULT,
-                    isSuccess ? EUExCallback.F_C_SUCCESS : EUExCallback.F_C_FAILED);
-            jsonCallback.put(JK_KEY_CONTACT_LIST, inData == null ? new JSONArray() : inData);
-        } catch (Exception e) {
+        if (searchFuncId != null) {
+            callbackToJs(Integer.parseInt(searchFuncId), false,isSuccess?0:1,inData);
+        } else {
+            JSONObject jsonCallback = new JSONObject();
+            try {
+                jsonCallback.put(EUExCallback.F_JK_RESULT,
+                        isSuccess ? EUExCallback.F_C_SUCCESS : EUExCallback.F_C_FAILED);
+                jsonCallback.put(JK_KEY_CONTACT_LIST, inData == null ? new JSONArray() : inData);
+            } catch (Exception e) {
+            }
+            jsJsonCallback(KEY_CONTACT_SEARCH, jsonCallback.toString());
         }
-        jsJsonCallback(KEY_CONTACT_SEARCH, jsonCallback.toString());
     }
 
     public void jsJsonCallback(String inCallbackName, String inData) {

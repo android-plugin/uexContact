@@ -36,17 +36,8 @@ import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AutoCompleteTextView;
-import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -90,7 +81,8 @@ public class ContactActivity extends Activity implements OnClickListener,
     private AutoCompleteTextView autoText = null;
     private AutoAdapter aAdapter = null;// 自定义的adapter提供给AutoCompleteTextView使用
 
-    private boolean mIsSelectAll=false;
+    private boolean mIsSelectAll = false;
+
     public JSONObject getContent() {
         return m_content;
     }
@@ -156,16 +148,16 @@ public class ContactActivity extends Activity implements OnClickListener,
                     try {
                         for (int j = 0, size = mAllContactList.size(); j < size; j++) {
                             ContactVO contactVO = mAllContactList.get(j);
-                            boolean bool= contactVO.isSelect();
+                            boolean bool = contactVO.isSelect();
                             if (bool) {
-                                    JSONObject jsonPeople = new JSONObject();
-                                    String name = contactVO.getDisplayName();
-                                    jsonPeople.put(EUExCallback.F_JK_NAME, name);
-                                    jsonPeople.put(EUExCallback.F_JK_NUM, contactVO.getPhone());
-                                    jsonPeople.put(EUExCallback.F_JK_EMAIL, contactVO.getEmail());
-                                    PFConcactMan.getValueWithName(ContactActivity.this,
-                                            String.valueOf(contactVO.getId()), jsonPeople, new SearchOptionVO());
-                                    jsonArray.put(jsonPeople);
+                                JSONObject jsonPeople = new JSONObject();
+                                String name = contactVO.getDisplayName();
+                                jsonPeople.put(EUExCallback.F_JK_NAME, name);
+                                jsonPeople.put(EUExCallback.F_JK_NUM, contactVO.getPhone());
+                                jsonPeople.put(EUExCallback.F_JK_EMAIL, contactVO.getEmail());
+                                PFConcactMan.getValueWithName(ContactActivity.this,
+                                        String.valueOf(contactVO.getId()), jsonPeople, new SearchOptionVO());
+                                jsonArray.put(jsonPeople);
                             }
                         }
 
@@ -184,7 +176,7 @@ public class ContactActivity extends Activity implements OnClickListener,
 
                     String autoName = autoText.getText().toString().trim();
                     for (ContactVO contactVO : mAllContactList) {
-                        String name =contactVO.getDisplayName();
+                        String name = contactVO.getDisplayName();
                         if (name != null && name.trim().equals(autoName)) {
                             listView.requestFocusFromTouch();
                             listView.setSelection(index);
@@ -318,7 +310,7 @@ public class ContactActivity extends Activity implements OnClickListener,
         BDebug.e("time--------------------", System.currentTimeMillis() - startTime);
     }
 
-    public class ContactAdapter extends BaseAdapter{
+    public class ContactAdapter extends BaseAdapter {
 
         public int getViewTypeCount() {
             return 2;
@@ -483,7 +475,7 @@ public class ContactActivity extends Activity implements OnClickListener,
                 hideKeyBoard();
             } else {
                 try {
-                    ContactVO contactVO= mAllContactList.get(arg2);
+                    ContactVO contactVO = mAllContactList.get(arg2);
                     JSONArray jsonArray = new JSONArray();
                     JSONObject jsonPerson = new JSONObject();
                     jsonPerson.put(EUExCallback.F_JK_NAME,
@@ -494,7 +486,7 @@ public class ContactActivity extends Activity implements OnClickListener,
                             contactVO.getEmail());
                     try {
                         PFConcactMan.getValueWithName(ContactActivity.this,
-                                String.valueOf( contactVO.getId()), jsonPerson, new SearchOptionVO());
+                                String.valueOf(contactVO.getId()), jsonPerson, new SearchOptionVO());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -540,20 +532,20 @@ public class ContactActivity extends Activity implements OnClickListener,
             hideKeyBoard();
             adapter.notifyDataSetChanged();
         } else if (id == finder.getId("select_all")) {// 全選按鈕
-            if (mIsSelectAll){
-                mIsSelectAll=false;
+            if (mIsSelectAll) {
+                mIsSelectAll = false;
                 m_select_all.setText("全选");
                 hideKeyBoard();
                 showLoading("Waiting...");
                 handler.sendEmptyMessage(handle_cancel_all);
-            }else{
-                mIsSelectAll=true;
+            } else {
+                mIsSelectAll = true;
                 m_select_all.setText("取消全选");
                 hideKeyBoard();
                 showLoading("Waiting...");
                 handler.sendEmptyMessage(handle_select_all);
             }
-         } else if (id == finder.getId("select_enter")) {// 確定多選按鈕
+        } else if (id == finder.getId("select_enter")) {// 確定多選按鈕
             hideKeyBoard();
             showLoading("Waiting...");
             handler.sendEmptyMessage(handle_select_enter);

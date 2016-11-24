@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-
     <style name="browser_main_theme" parent="@android:style/Theme.NoTitleBar">
         <item name="android:scrollbarThumbHorizontal">@drawable/engine_scroller_thumb_hor</item>
         <item name="android:scrollbarThumbVertical">@drawable/engine_scroller_thumb_ver</item>
@@ -12,7 +11,6 @@
         <item name="android:windowShowWallpaper">false</item>
         <item name="android:windowActionBar">false</item>
     </style>
-
     <style name="browser_loading_theme" parent="@android:style/Theme.NoTitleBar">
         <item name="android:scrollbarThumbHorizontal">@drawable/engine_scroller_thumb_hor</item>
         <item name="android:scrollbarThumbVertical">@drawable/engine_scroller_thumb_ver</item>
@@ -67,10 +65,8 @@
     </style>
 
     <style name="Anim_platform_window_actionsheet_dialog" parent="android:Animation">
-        <item name="android:windowEnterAnimation">@anim/platform_window_actionsheet_pull_up_anim
-        </item>
-        <item name="android:windowExitAnimation">@anim/platform_window_actionsheet_push_down_anim
-        </item>
+        <item name="android:windowEnterAnimation">@anim/platform_window_actionsheet_pull_up_anim</item>
+        <item name="android:windowExitAnimation">@anim/platform_window_actionsheet_push_down_anim</item>
     </style>
 
     <style name="Style_platform_activity_transparent">
