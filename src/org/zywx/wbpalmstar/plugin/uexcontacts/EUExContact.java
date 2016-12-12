@@ -134,7 +134,15 @@ public class EUExContact extends EUExBase {
                                     String phoneNumber = phones
                                             .getString(phones
                                                     .getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER));
-                                    jsonArray.put(phoneNumber);
+                                    boolean exist=false;
+                                    for (int i=0;i<jsonArray.length();i++){
+                                        if (jsonArray.get(i).equals(phoneNumber)){
+                                            exist=true;
+                                        }
+                                    }
+                                    if (!exist) {
+                                        jsonArray.put(phoneNumber);
+                                    }
                                 }
                                 jobj.put(EUExCallback.F_JK_NUM, jsonArray);
                                 if (phones.isClosed()) {
