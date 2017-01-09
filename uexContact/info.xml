@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uexplugins>
-    <plugin uexName="uexContact" version="4.0.1" build="9">
-        <info>9:解决获取联系人号码重复的问题</info>
-        <build>8:4.0</build>
-        <build>6:更新UI,解决多选联系人慢的问题</build>
-        <build>5:addItem接口支持多个号码的添加,以分号分隔</build>
-        <build>4:新增search,modifyWithId,deleteWithId接口以及对应回调.优化查询逻辑</build>
-        <build>3:修复执行过慢影响UI线程的问题,修正当增删改查存在的部分回调错误问题</build>
-        <build>2:修复打开联系人后邮箱错乱的问题</build>
-        <build>1:searchItem接口增加返回信息条数配置;2:addItem接口增加是否弹出提示框配置</build>
-        <build>0:联系人功能插件</build>
+    <plugin uexName="uexContact" version="4.0.1" build="1">
+        <info>1:解决获取联系人号码重复的问题</info>
+        <build>0:4.0</build>
     </plugin>
 </uexplugins>
