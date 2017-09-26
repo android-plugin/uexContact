@@ -250,7 +250,7 @@ public class EUExContact extends EUExBase {
     private void addContact(String inName, String inNum, String inEmail) {
         if (inName != null && inName.length() > 0
                 && inNum != null && inEmail != null) {
-            if (PFConcactMan.add(mContext, inName,
+            if (mContext != null && PFConcactMan.add(mContext, inName,
                     inNum, inEmail)) {
                 jsCallback(KEY_CONTACT_ADD, 0,
                         EUExCallback.F_C_INT,
@@ -291,7 +291,7 @@ public class EUExContact extends EUExBase {
                                         } catch (Exception e) {
                                         }
                                         if (deleteOptionVO != null) {
-                                            if (PFConcactMan.deletesWithContactId(mContext, deleteOptionVO.getContactId())) {
+                                            if (mContext != null && PFConcactMan.deletesWithContactId(mContext, deleteOptionVO.getContactId())) {
                                                 jsCallback(KEY_CONTACT_DELETEWITHID, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_SUCCESS);
@@ -332,7 +332,7 @@ public class EUExContact extends EUExBase {
                                     @Override
                                     public void run() {
                                         if (inName != null && inName.length() > 0) {
-                                            if (PFConcactMan.deletes(mContext, inName)) {
+                                            if (mContext != null && PFConcactMan.deletes(mContext, inName)) {
                                                 jsCallback(KEY_CONTACT_DELETEITEM, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_SUCCESS);
@@ -368,7 +368,7 @@ public class EUExContact extends EUExBase {
                             SearchOptionVO.class);
                 } catch (Exception e) {
                 }
-                if (searchOptionVO == null) {
+                if (searchOptionVO == null || mContext == null) {
                     searchCallback(false, null);
                     return;
                 }
@@ -438,7 +438,7 @@ public class EUExContact extends EUExBase {
                 } catch (Exception e) {
                 }
                 searchOptionVO.setSearchName(inName);
-                if (inName != null && inName.length() >= 0) {
+                if (mContext != null && inName != null && inName.length() >= 0) {
                     JSONArray outJsonObj = PFConcactMan.search(mContext, searchOptionVO);
                     if (outJsonObj != null) {
                         if (resultNum == -1) {
@@ -506,7 +506,7 @@ public class EUExContact extends EUExBase {
                                         } catch (Exception e) {
                                         }
                                         if (modifyOptionVO != null) {
-                                            if (PFConcactMan.modify(mContext, modifyOptionVO)) {
+                                            if (mContext != null && PFConcactMan.modify(mContext, modifyOptionVO)) {
                                                 jsCallback(KEY_CONTACT_MODIFYWITHID, 0,
                                                         EUExCallback.F_C_INT,
                                                         EUExCallback.F_C_SUCCESS);
@@ -551,7 +551,7 @@ public class EUExContact extends EUExBase {
                                     public void run() {
                                         if (inName != null && inName.length() > 0
                                                 && inNum != null && inEmail != null) {
-                                            if (PFConcactMan.modify(mContext, inName,
+                                            if (mContext != null && PFConcactMan.modify(mContext, inName,
                                                     inNum, inEmail)) {
                                                 jsCallback(KEY_CONTACT_MODIFYITEM, 0,
                                                         EUExCallback.F_C_INT,
