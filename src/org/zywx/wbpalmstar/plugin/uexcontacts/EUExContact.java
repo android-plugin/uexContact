@@ -319,7 +319,7 @@ public class EUExContact extends EUExBase {
     private void addContact(String inName, String inNum, String inEmail) {
         if (inName != null && inName.length() > 0
                 && inNum != null && inEmail != null) {
-            if (PFConcactMan.add(mContext, inName,
+            if (mContext != null && PFConcactMan.add(mContext, inName,
                     inNum, inEmail)) {
                 if (addItemFuncId != null) {
                     callbackToJs(Integer.parseInt(addItemFuncId), false, 0);
@@ -376,7 +376,7 @@ public class EUExContact extends EUExBase {
                                             }
                                         }
                                         if (deleteOptionVO != null) {
-                                            if (PFConcactMan.deletesWithContactId(mContext, deleteOptionVO.getContactId())) {
+                                            if (mContext != null && PFConcactMan.deletesWithContactId(mContext, deleteOptionVO.getContactId())) {
                                                 if (deleteWithIdFuncId != null) {
                                                     callbackToJs(Integer.parseInt(deleteWithIdFuncId), false, 0);
                                                 } else {
@@ -437,7 +437,7 @@ public class EUExContact extends EUExBase {
                                     @Override
                                     public void run() {
                                         if (inName != null && inName.length() > 0) {
-                                            if (PFConcactMan.deletes(mContext, inName)) {
+                                            if (mContext != null && PFConcactMan.deletes(mContext, inName)) {
                                                 if (deleteItemFuncId != null) {
                                                     callbackToJs(Integer.parseInt(deleteItemFuncId), false, 0);
                                                 } else {
@@ -498,7 +498,7 @@ public class EUExContact extends EUExBase {
                         e.printStackTrace();
                     }
                 }
-                if (searchOptionVO == null) {
+                if (searchOptionVO == null || mContext == null) {
                     searchCallback(false, null);
                     return;
                 }
@@ -575,7 +575,7 @@ public class EUExContact extends EUExBase {
                 }
 
                 searchOptionVO.setSearchName(inName);
-                if (inName != null && inName.length() >= 0) {
+                if (mContext != null && inName != null && inName.length() >= 0) {
                     JSONArray outJsonObj = PFConcactMan.search(mContext, searchOptionVO);
                     if (outJsonObj != null) {
                         if (resultNum == -1) {
@@ -667,7 +667,7 @@ public class EUExContact extends EUExBase {
                                             }
                                         }
                                         if (modifyOptionVO != null) {
-                                            if (PFConcactMan.modify(mContext, modifyOptionVO)) {
+                                            if (mContext != null && PFConcactMan.modify(mContext, modifyOptionVO)) {
                                                 if (modifyWithIdFuncId != null) {
                                                     callbackToJs(Integer.parseInt(modifyWithIdFuncId), false, 0);
                                                 } else {
@@ -733,7 +733,7 @@ public class EUExContact extends EUExBase {
                                     public void run() {
                                         if (inName != null && inName.length() > 0
                                                 && inNum != null && inEmail != null) {
-                                            if (PFConcactMan.modify(mContext, inName,
+                                            if (mContext != null && PFConcactMan.modify(mContext, inName,
                                                     inNum, inEmail)) {
                                                 if (modifyItemFuncId != null) {
                                                     callbackToJs(Integer.parseInt(modifyItemFuncId), false, 0);
