@@ -18,21 +18,21 @@
 
 package org.zywx.wbpalmstar.plugin.uexcontacts;
 
-import a_vcard.android.syncml.pim.PropertyNode;
-import a_vcard.android.syncml.pim.VDataBuilder;
-import a_vcard.android.syncml.pim.VNode;
-import a_vcard.android.syncml.pim.vcard.VCardParser;
+import android.Manifest;
 import android.accounts.AuthenticatorDescription;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +52,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import a_vcard.android.syncml.pim.PropertyNode;
+import a_vcard.android.syncml.pim.VDataBuilder;
+import a_vcard.android.syncml.pim.VNode;
+import a_vcard.android.syncml.pim.vcard.VCardParser;
+
 public class EUExContact extends EUExBase {
     public static final String tag = "uexContact_";
     public static final String KEY_CONTACT_SEARCHITEM = "uexContact.cbSearchItem";
@@ -69,6 +74,7 @@ public class EUExContact extends EUExBase {
 
     public static final int F_ACT_REQ_CODE_UEX_CONTACT = 2;
     public static final int F_ACT_REQ_CODE_UEX_MULTI_CONTACT = 9;
+    private static final int REQUESTPERSSIONSCONTACT=4;
     private ResoureFinder finder = null;
     private Object accountType, accountName;
 
@@ -223,8 +229,28 @@ public class EUExContact extends EUExBase {
         if (parm != null && parm.length == 1) {
             openFuncId = parm[0];
         }
-        Intent intent = new Intent();
 
+        requsetPerssions(Manifest.permission.READ_CONTACTS,"读取联系人权限!",REQUESTPERSSIONSCONTACT);
+//        readContact();
+    }
+
+    @Override
+    public void onRequestPermissionResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionResult(requestCode, permissions, grantResults);
+        if(requestCode==REQUESTPERSSIONSCONTACT) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission Granted 授予权限
+                readContact();
+            } else {
+                // Permission Denied 权限被拒绝
+                Toast.makeText(mContext, "为了不影响读取联系人，请开启相关权限!",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void readContact() {
+        Intent intent = new Intent();
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
             intent.setAction(Intent.ACTION_PICK);
             intent.setData(android.provider.Contacts.People.CONTENT_URI);
