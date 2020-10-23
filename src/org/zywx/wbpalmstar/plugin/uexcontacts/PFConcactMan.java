@@ -48,7 +48,9 @@ import org.zywx.wbpalmstar.plugin.uexcontacts.vo.ModifyOptionVO;
 import org.zywx.wbpalmstar.plugin.uexcontacts.vo.SearchOptionVO;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class PFConcactMan {
     private static ResoureFinder finder = ResoureFinder.getInstance();
@@ -837,25 +839,82 @@ public class PFConcactMan {
 
         for (int i = 0; i < EUExContact.types.length; i++) {
 
-            String valuse = (String) content.get(EUExContact.types[i]);
-            if (TextUtils.isEmpty(valuse)) {
-                continue;
-            }
-
             if (i == 0) {
+                // N
+                String value = (String) content.get(EUExContact.types[i]);
+                if (TextUtils.isEmpty(value)) {
+                    continue;
+                }
                 ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, valuse.replaceAll(";", "")).build());
+                        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, value.replaceAll(";", "")).build());
             }
             if (i == 1) {
-                ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, valuse).withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_HOME).build());
+                // TEL
+                Object valueObj = content.get(EUExContact.types[i]);
+                if (valueObj instanceof String){
+                    String value = (String)valueObj;
+                    if (TextUtils.isEmpty(value)) {
+                        continue;
+                    }
+                    ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                            .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, value)
+                            .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_HOME).build());
+                }else if (valueObj instanceof HashMap){
+                    HashMap<Set<String>, String> valueMap = (HashMap<Set<String>, String>)valueObj;
+                    for (Set<String> paramSet : valueMap.keySet()){
+                        String value = valueMap.get(paramSet);
+                        ContentProviderOperation.Builder opBuilder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, value);
+                        if (paramSet.contains("CELL")){
+                            // 移动电话
+                                opBuilder.withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE);
+                        }else if (paramSet.contains("WORK")){
+                            // 工作电话
+                            opBuilder.withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
+                        }else {
+                            // 其他情况，统一设置为家庭电话
+                            opBuilder.withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_HOME);
+                        }
+                        ops.add(opBuilder.build());
+                    }
+                }
             }
             if (i == 2) {
-                ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.Email.DATA, valuse).withValue(ContactsContract.CommonDataKinds.Email.TYPE, ContactsContract.CommonDataKinds.Email.TYPE_HOME).build());
+                Object valueObj = content.get(EUExContact.types[i]);
+                if (valueObj instanceof String){
+                    String value = (String)valueObj;
+                    if (TextUtils.isEmpty(value)) {
+                        continue;
+                    }
+                    ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+                            .withValue(ContactsContract.CommonDataKinds.Email.DATA, value)
+                            .withValue(ContactsContract.CommonDataKinds.Email.TYPE, ContactsContract.CommonDataKinds.Email.TYPE_HOME)
+                            .build());
+                }else if (valueObj instanceof HashMap){
+                    HashMap<Set<String>, String> valueMap = (HashMap<Set<String>, String>)valueObj;
+                    for (Set<String> paramSet : valueMap.keySet()){
+                        String value = valueMap.get(paramSet);
+                        ContentProviderOperation.Builder opBuilder = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+                                .withValue(ContactsContract.CommonDataKinds.Email.DATA, value)
+                                .withValue(ContactsContract.CommonDataKinds.Email.TYPE, ContactsContract.CommonDataKinds.Email.TYPE_WORK);
+                        ops.add(opBuilder.build());
+                    }
+                }
             }
             if (i == 3) {
-                String[] structured = valuse.split(";");
+                String value = (String) content.get(EUExContact.types[i]);
+                if (TextUtils.isEmpty(value)) {
+                    continue;
+                }
+                String[] structured = value.split(";");
                 if (structured.length == 6) {
                     String[] newstructured = new String[7];
                     for (int j = 0; j < structured.length; j++) {
@@ -870,18 +929,30 @@ public class PFConcactMan {
                         .withValue(ContactsContract.CommonDataKinds.StructuredPostal.TYPE, ContactsContract.CommonDataKinds.StructuredPostal.TYPE_WORK).build());
             }
             if (i == 4) {
+                String value = (String) content.get(EUExContact.types[i]);
+                if (TextUtils.isEmpty(value)) {
+                    continue;
+                }
                 ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.Organization.COMPANY, valuse).withValue(ContactsContract.CommonDataKinds.Organization.TITLE, (String) content.get(EUExContact.types[i + 1]))
+                        .withValue(ContactsContract.CommonDataKinds.Organization.COMPANY, value).withValue(ContactsContract.CommonDataKinds.Organization.TITLE, (String) content.get(EUExContact.types[i + 1]))
                         .withValue(ContactsContract.CommonDataKinds.Organization.TYPE, ContactsContract.CommonDataKinds.Organization.TYPE_WORK).build());
 
             }
             if (i == 6) {
+                String value = (String) content.get(EUExContact.types[i]);
+                if (TextUtils.isEmpty(value)) {
+                    continue;
+                }
                 ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.Website.URL, valuse).withValue(ContactsContract.CommonDataKinds.Website.TYPE, ContactsContract.CommonDataKinds.Website.TYPE_WORK).build());
+                        .withValue(ContactsContract.CommonDataKinds.Website.URL, value).withValue(ContactsContract.CommonDataKinds.Website.TYPE, ContactsContract.CommonDataKinds.Website.TYPE_WORK).build());
             }
             if (i == 7) {
+                String value = (String) content.get(EUExContact.types[i]);
+                if (TextUtils.isEmpty(value)) {
+                    continue;
+                }
                 ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.Note.NOTE, valuse).build());
+                        .withValue(ContactsContract.CommonDataKinds.Note.NOTE, value).build());
             }
         }
 

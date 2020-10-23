@@ -49,8 +49,10 @@ import org.zywx.wbpalmstar.plugin.uexcontacts.vo.SearchOptionVO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import a_vcard.android.syncml.pim.PropertyNode;
 import a_vcard.android.syncml.pim.VDataBuilder;
@@ -822,7 +824,7 @@ public class EUExContact extends EUExBase {
                                 "UTF-8", builder);
                         // get all parsed contacts
                         List<VNode> pimContacts = builder.vNodeList;
-                        Map<String, String> contactMap = new HashMap<String, String>();
+                        Map<String, Object> contactMap = new HashMap<>();
                         // do something for all the contacts
                         for (VNode contact : pimContacts) {
                             ArrayList<PropertyNode> props = contact.propList;
@@ -832,8 +834,25 @@ public class EUExContact extends EUExBase {
                             for (PropertyNode prop : props) {
                                 for (String type : types) {
                                     if (type.equals(prop.propName)) {
-                                        contactMap.put(type,
-                                                prop.propValue);
+                                        if (prop.paramMap_TYPE != null
+                                                && prop.paramMap_TYPE.size() > 0
+                                                && (type.equals("TEL") || type.equals("EMAIL"))){
+                                            // 细分了类型(note: 目前仅支持TEL和EMAIL的细分类型的处理，如果要增加类型，则需要同时修改PFContactMan类里的逻辑，不要忘记)
+                                            HashMap<Set<String>, String> paramTypeMap  = null;
+                                            Object paramTypeObject  = contactMap.get(type);
+                                            // 如果已经有多个相同type的数据，则取出上一个数据
+                                            if (!(paramTypeObject instanceof HashMap)){
+                                                paramTypeMap = new HashMap<>();
+                                            }else{
+                                                paramTypeMap = (HashMap)paramTypeObject;
+                                            }
+                                            paramTypeMap.put(prop.paramMap_TYPE, prop.propValue);
+                                            contactMap.put(type, paramTypeMap);
+                                        }else{
+                                            // 没有细分类型
+                                            contactMap.put(type,
+                                                    prop.propValue);
+                                        }
                                     }
                                 }
 
@@ -867,7 +886,6 @@ public class EUExContact extends EUExBase {
                         }
                         e.printStackTrace();
                     }
-                    return;
                 }
             }).start();
         } else {
@@ -890,7 +908,7 @@ public class EUExContact extends EUExBase {
                                                         "UTF-8", builder);
                                                 // get all parsed contacts
                                                 List<VNode> pimContacts = builder.vNodeList;
-                                                Map<String, String> contactMap = new HashMap<String, String>();
+                                                Map<String, Object> contactMap = new HashMap<>();
                                                 // do something for all the contacts
                                                 for (VNode contact : pimContacts) {
                                                     ArrayList<PropertyNode> props = contact.propList;
@@ -900,8 +918,25 @@ public class EUExContact extends EUExBase {
                                                     for (PropertyNode prop : props) {
                                                         for (String type : types) {
                                                             if (type.equals(prop.propName)) {
-                                                                contactMap.put(type,
-                                                                        prop.propValue);
+                                                                if (prop.paramMap_TYPE != null
+                                                                        && prop.paramMap_TYPE.size() > 0
+                                                                        && (type.equals("TEL") || type.equals("EMAIL"))){
+                                                                    // 细分了类型(note: 目前仅支持TEL和EMAIL的细分类型的处理，如果要增加类型，则需要同时修改PFContactMan类里的逻辑，不要忘记)
+                                                                    HashMap<Set<String>, String> paramTypeMap  = null;
+                                                                    Object paramTypeObject  = contactMap.get(type);
+                                                                    // 如果已经有多个相同type的数据，则取出上一个数据
+                                                                    if (!(paramTypeObject instanceof HashMap)){
+                                                                        paramTypeMap = new HashMap<>();
+                                                                    }else{
+                                                                        paramTypeMap = (HashMap)paramTypeObject;
+                                                                    }
+                                                                    paramTypeMap.put(prop.paramMap_TYPE, prop.propValue);
+                                                                    contactMap.put(type, paramTypeMap);
+                                                                }else{
+                                                                    // 没有细分类型
+                                                                    contactMap.put(type,
+                                                                            prop.propValue);
+                                                                }
                                                             }
                                                         }
 
