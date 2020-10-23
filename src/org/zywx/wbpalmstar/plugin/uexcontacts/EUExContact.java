@@ -77,6 +77,7 @@ public class EUExContact extends EUExBase {
     public static final int F_ACT_REQ_CODE_UEX_CONTACT = 2;
     public static final int F_ACT_REQ_CODE_UEX_MULTI_CONTACT = 9;
     private static final int REQUESTPERSSIONSCONTACT=4;
+    private static final int REQUEST_PERSSIONS_RW_CONTACT = 20000;
     private ResoureFinder finder = null;
     private Object accountType, accountName;
 
@@ -98,6 +99,10 @@ public class EUExContact extends EUExBase {
     }
 
     public static boolean customLinkMan = false;
+
+    private void requestRWContactPermissions(){
+        requsetPerssionsMore(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS}, "本次操作需要读写联系人的权限", REQUEST_PERSSIONS_RW_CONTACT);
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -248,6 +253,16 @@ public class EUExContact extends EUExBase {
                 Toast.makeText(mContext, "为了不影响读取联系人，请开启相关权限!",
                         Toast.LENGTH_SHORT).show();
             }
+        }else if(requestCode==REQUEST_PERSSIONS_RW_CONTACT) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission Granted 授予权限
+                // 权限申请成功，但是暂时不需要什么操作。
+                BDebug.i("EUExContact", "onRequestPermissionResult REQUEST_PERSSIONS_RW_CONTACT");
+            } else {
+                // Permission Denied 权限被拒绝
+                Toast.makeText(mContext, "为了不影响读写联系人，请开启相关权限!",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -282,6 +297,7 @@ public class EUExContact extends EUExBase {
     }
 
     public void addItem(final String[] parm) {
+        requestRWContactPermissions();
         if (parm == null || parm.length < 3)
             return;
         final String inName = parm[0];
@@ -345,6 +361,7 @@ public class EUExContact extends EUExBase {
     }
 
     private void addContact(String inName, String inNum, String inEmail) {
+        requestRWContactPermissions();
         if (inName != null && inName.length() > 0
                 && inNum != null && inEmail != null) {
             if (mContext != null && PFConcactMan.add(mContext, inName,
@@ -377,6 +394,7 @@ public class EUExContact extends EUExBase {
     }
 
     public void deleteWithId(final String[] parm) {
+        requestRWContactPermissions();
         if (parm == null || parm.length < 1)
             return;
         if (parm.length == 2) {
@@ -446,6 +464,7 @@ public class EUExContact extends EUExBase {
     }
 
     public void deleteItem(String[] parm) {
+        requestRWContactPermissions();
         if (parm == null || parm.length < 1)
             return;
         final String inName = parm[0];
@@ -668,6 +687,7 @@ public class EUExContact extends EUExBase {
     }
 
     public void modifyWithId(final String[] parm) {
+        requestRWContactPermissions();
         if (parm == null || parm.length < 1)
             return;
         if (parm.length == 2) {
@@ -738,6 +758,7 @@ public class EUExContact extends EUExBase {
 
 
     public void modifyItem(String[] parm) {
+        requestRWContactPermissions();
         if (parm == null || parm.length < 3)
             return;
         final String inName = parm[0];
@@ -807,6 +828,7 @@ public class EUExContact extends EUExBase {
             "TITLE", "URL", "NOTE"};
 
     public void addItemWithVCard(final String[] parm) {
+        requestRWContactPermissions();
         if (parm == null || parm.length < 2)
             return;
         if (parm.length == 3) {
