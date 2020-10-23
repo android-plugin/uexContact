@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="target-densitydpi=device-dpi,width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <title>uexContact插件测试</title>
+    <script type="text/javascript">
+
+    function addItemWithVCard() {
+            var vcardInfo = 'BEGIN:VCARD\nVERSION:3.0\nN:测试联系人\nORG:正益移动-北京\nTITLE:开发\nTEL;TYPE=WORK,VOICE:010-12345678\nTEL;TYPE=WORK,VOICE,CELL:18612345678\nEMAIL;TYPE=PREF,INTERNET:yipeng.zhang@zymobi.com\nEND:VCARD'
+            uexContact.addItemWithVCard(vcardInfo, 1, function(data) {
+                if (data == 0) {
+                    alert("添加成功!");
+                }
+            });
+    }
+
+    window.uexOnload = function(){
+        console.log("uexContact测试加载页面")
+    }
+
+    </script>
+</head>
+
+<body>
+    <div class="tit">uexContact插件测试</div>
+    <div class="conbor">
+        <div class="consj">
+
+            <input class="btn" type="button" value="增加vcard联系人" onClick="addItemWithVCard();">
+
+        </div>
+    </div>
+</body>
+
+</html>
