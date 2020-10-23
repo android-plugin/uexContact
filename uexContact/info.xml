@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uexplugins>
-    <plugin uexName="uexContact" version="4.3.3">
-        <info>3:修复引擎升级系统6.0以上动态权限申请动态权限申请</info>
+    <plugin uexName="uexContact" version="4.3.6">
+        <info>6:修复添加vcard联系人时无法添加多个电话号码的问题，并增加了申请修改联系人权限的逻辑</info>
+        <build>3:修复引擎升级系统6.0以上动态权限申请动态权限申请</build>
         <build>2:修复mContext空指针异常</build>
         <build>1:解决获取联系人号码重复的问题</build>
         <build>0:4.0</build>
