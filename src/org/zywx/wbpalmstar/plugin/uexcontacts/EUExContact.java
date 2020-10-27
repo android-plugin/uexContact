@@ -60,7 +60,9 @@ import a_vcard.android.syncml.pim.VNode;
 import a_vcard.android.syncml.pim.vcard.VCardParser;
 
 public class EUExContact extends EUExBase {
-    public static final String tag = "uexContact_";
+
+    private static final String TAG = "EUExContact";
+
     public static final String KEY_CONTACT_SEARCHITEM = "uexContact.cbSearchItem";
     public static final String KEY_CONTACT_OPEN = "uexContact.cbOpen";
     public static final String KEY_CONTACT_MULTIOPEN = "uexContact.cbMultiOpen";
@@ -78,8 +80,11 @@ public class EUExContact extends EUExBase {
     public static final int F_ACT_REQ_CODE_UEX_MULTI_CONTACT = 9;
     private static final int REQUESTPERSSIONSCONTACT=4;
     private static final int REQUEST_PERSSIONS_RW_CONTACT = 20000;
+    private static final int REQUEST_PERMISSIONS_RW_CONTACT_ADD_VCARD = 20001;
     private ResoureFinder finder = null;
     private Object accountType, accountName;
+
+    private HashMap<Integer, String[]> functionParamsMap = new HashMap<>();
 
     private String openFuncId = null;
     private String multiOpenFuncId = null;
@@ -101,7 +106,14 @@ public class EUExContact extends EUExBase {
     public static boolean customLinkMan = false;
 
     private void requestRWContactPermissions(){
-        requsetPerssionsMore(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS}, "本次操作需要读写联系人的权限", REQUEST_PERSSIONS_RW_CONTACT);
+        requestRWContactPermissions(-1);
+    }
+
+    private void requestRWContactPermissions(int requestCode){
+        if (requestCode == -1){
+            requestCode = REQUEST_PERSSIONS_RW_CONTACT;
+        }
+        requsetPerssionsMore(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS}, "本次操作需要读写联系人的权限", requestCode);
     }
 
     @Override
@@ -244,6 +256,7 @@ public class EUExContact extends EUExBase {
     @Override
     public void onRequestPermissionResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionResult(requestCode, permissions, grantResults);
+        String[] params = functionParamsMap.get(requestCode);
         if(requestCode==REQUESTPERSSIONSCONTACT) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission Granted 授予权限
@@ -257,9 +270,20 @@ public class EUExContact extends EUExBase {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission Granted 授予权限
                 // 权限申请成功，但是暂时不需要什么操作。
-                BDebug.i("EUExContact", "onRequestPermissionResult REQUEST_PERSSIONS_RW_CONTACT");
+                BDebug.i(TAG, "onRequestPermissionResult REQUEST_PERSSIONS_RW_CONTACT");
             } else {
                 // Permission Denied 权限被拒绝
+                Toast.makeText(mContext, "为了不影响读写联系人，请开启相关权限!",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }else if (requestCode == REQUEST_PERMISSIONS_RW_CONTACT_ADD_VCARD){
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission Granted 授予权限
+                BDebug.i(TAG, "onRequestPermissionResult PERMISSION_GRANTED REQUEST_PERMISSIONS_RW_CONTACT_ADD_VCARD");
+                addItemWithVCard_Internal(params);
+            } else {
+                // Permission Denied 权限被拒绝
+                BDebug.e(TAG, "onRequestPermissionResult PERMISSION_DENYED REQUEST_PERMISSIONS_RW_CONTACT_ADD_VCARD");
                 Toast.makeText(mContext, "为了不影响读写联系人，请开启相关权限!",
                         Toast.LENGTH_SHORT).show();
             }
@@ -827,8 +851,12 @@ public class EUExContact extends EUExBase {
     public static String types[] = {"N", "TEL", "EMAIL", "ADR", "ORG",
             "TITLE", "URL", "NOTE"};
 
-    public void addItemWithVCard(final String[] parm) {
-        requestRWContactPermissions();
+    public void addItemWithVCard(final String[] parm){
+        functionParamsMap.put(REQUEST_PERMISSIONS_RW_CONTACT_ADD_VCARD, parm);
+        requestRWContactPermissions(REQUEST_PERMISSIONS_RW_CONTACT_ADD_VCARD);
+    }
+
+    public void addItemWithVCard_Internal(final String[] parm) {
         if (parm == null || parm.length < 2)
             return;
         if (parm.length == 3) {
